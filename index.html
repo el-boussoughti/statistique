@@ -1,267 +1,445 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestion des Quittances</title>
-  <meta name="description" content="Application de gestion et de saisie des quittances d'assurance — suivi des entrées, statistiques et export Excel.">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestion des Quittances</title>
+    <meta
+      name="description"
+      content="Application de gestion et de saisie des quittances d'assurance — suivi des entrées, statistiques et export Excel."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
-  <!-- Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
-  <!-- XLSX -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- App styles -->
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-
-<div class="app-layout">
-
-  <!-- ================================================
+    <!-- Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css"
+    />
+    <!-- XLSX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- App styles -->
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <!-- ================================================
        TOPBAR
        ================================================ -->
-  <header class="topbar">
-    <div class="topbar-brand">
-      <div class="brand-icon" aria-hidden="true"><i class="ti ti-receipt-2"></i></div>
-      <div>
-        <span class="brand-name">Quittances</span>
-        <span class="brand-sub">Gestion des reçus</span>
-      </div>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn-icon" onclick="document.getElementById('import-file').click()" title="Importer depuis Excel (xlsx)">
-        <i class="ti ti-file-import"></i>
-      </button>
-      <button class="btn-icon" onclick="exportExcel()" title="Exporter en Excel">
-        <i class="ti ti-file-spreadsheet"></i>
-      </button>
-      <input type="file" id="import-file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
-    </div>
-  </header>
+      <header class="topbar">
+        <div class="topbar-brand">
+          <div class="brand-icon" aria-hidden="true">
+            <i class="ti ti-receipt-2"></i>
+          </div>
+          <div>
+            <span class="brand-name">Quittances</span>
+            <span class="brand-sub">Gestion des reçus</span>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button
+            class="btn-icon"
+            onclick="document.getElementById('import-file').click()"
+            title="Importer depuis Excel (xlsx)"
+          >
+            <i class="ti ti-file-import"></i>
+          </button>
+          <button
+            class="btn-icon"
+            onclick="exportExcel()"
+            title="Exporter en Excel"
+          >
+            <i class="ti ti-file-spreadsheet"></i>
+          </button>
+          <input
+            type="file"
+            id="import-file"
+            accept=".xlsx,.xls"
+            style="display: none"
+            onchange="importExcel(this)"
+          />
+        </div>
+      </header>
 
-  <!-- ================================================
+      <!-- ================================================
        CONTENT GRID
        ================================================ -->
-  <main class="content-grid">
-
-    <!-- ---- Column 1 : Form + Charts ---- -->
-    <section class="card form-card" aria-label="Formulaire de saisie">
-
-      <div class="card-header">
-        <span class="card-title">Ajouter une entrée</span>
-      </div>
-
-      <!-- Form row -->
-      <div class="form-row" id="form-row">
-
-        <!-- N° quittance with custom stepper -->
-        <div class="field" id="n-field">
-          <label for="inp-n">N° quittance</label>
-          <div class="stepper-wrap">
-            <button class="stepper-btn" id="btn-decrement" type="button" onclick="stepN(-1)" tabindex="-1" title="Décrémenter">
-              <i class="ti ti-minus"></i>
-            </button>
-            <input type="number" id="inp-n" placeholder="101" min="1" oninput="checkNEdited()" aria-label="Numéro de quittance">
-            <button class="stepper-btn" id="btn-increment" type="button" onclick="stepN(1)" tabindex="-1" title="Incrémenter">
-              <i class="ti ti-plus"></i>
-            </button>
+      <main class="content-grid">
+        <!-- ---- Column 1 : Form + Charts ---- -->
+        <section class="card form-card" aria-label="Formulaire de saisie">
+          <div class="card-header">
+            <span class="card-title">Ajouter une entrée</span>
           </div>
-          <div id="n-warning" class="n-warn" style="display:none" title="L'auto-incrémentation n'est plus synchronisée — cliquez pour réinitialiser">
-            <i class="ti ti-alert-triangle" aria-hidden="true"></i> Désynchronisé
-          </div>
-        </div>
 
-        <!-- Type combobox -->
-        <div class="field">
-          <label for="inp-type">Type</label>
-          <div id="type-wrap" class="type-wrap">
-            <input
-              type="text"
-              id="inp-type"
-              placeholder="Choisir ou taper…"
-              oninput="onTypeChange();showTypeDropdown()"
-              autocomplete="off"
-              aria-label="Type de quittance"
-              aria-expanded="false"
-              aria-haspopup="listbox"
+          <!-- Form row -->
+          <div class="form-row" id="form-row">
+            <!-- N° quittance with custom stepper -->
+            <div class="field" id="n-field">
+              <label for="inp-n">N° quittance</label>
+              <div class="stepper-wrap">
+                <button
+                  class="stepper-btn"
+                  id="btn-decrement"
+                  type="button"
+                  onclick="stepN(-1)"
+                  tabindex="-1"
+                  title="Décrémenter"
+                >
+                  <i class="ti ti-minus"></i>
+                </button>
+                <input
+                  type="number"
+                  id="inp-n"
+                  placeholder="101"
+                  min="1"
+                  oninput="checkNEdited()"
+                  aria-label="Numéro de quittance"
+                />
+                <button
+                  class="stepper-btn"
+                  id="btn-increment"
+                  type="button"
+                  onclick="stepN(1)"
+                  tabindex="-1"
+                  title="Incrémenter"
+                >
+                  <i class="ti ti-plus"></i>
+                </button>
+              </div>
+              <div
+                id="n-warning"
+                class="n-warn"
+                style="display: none"
+                title="L'auto-incrémentation n'est plus synchronisée — cliquez pour réinitialiser"
+              >
+                <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+                Désynchronisé
+              </div>
+            </div>
+
+            <!-- Type combobox -->
+            <div class="field">
+              <label for="inp-type">Type</label>
+              <div id="type-wrap" class="type-wrap">
+                <input
+                  type="text"
+                  id="inp-type"
+                  placeholder="Choisir ou taper…"
+                  oninput="
+                    onTypeChange();
+                    showTypeDropdown();
+                  "
+                  autocomplete="off"
+                  aria-label="Type de quittance"
+                  aria-expanded="false"
+                  aria-haspopup="listbox"
+                />
+                <i
+                  class="ti ti-chevron-down"
+                  id="type-drop-icon"
+                  aria-hidden="true"
+                ></i>
+              </div>
+            </div>
+
+            <!-- Montant -->
+            <div class="field">
+              <label for="inp-montant">Montant (dh)</label>
+              <input
+                type="text"
+                id="inp-montant"
+                placeholder="0"
+                inputmode="decimal"
+                autocomplete="off"
+                class="input-montant"
+                aria-label="Montant en dirhams"
+              />
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+              <button
+                class="btn-primary"
+                id="btn-submit"
+                onclick="addEntry()"
+                aria-label="Ajouter l'entrée"
+              >
+                <i class="ti ti-plus" aria-hidden="true"></i>
+                <span>Ajouter</span>
+              </button>
+              <button
+                class="btn-secondary btn-icon-only"
+                id="btn-cancel"
+                style="display: none"
+                onclick="cancelEdit()"
+                title="Annuler la modification"
+                aria-label="Annuler la modification"
+              >
+                <i class="ti ti-x" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hint bar -->
+          <div class="hint" id="hint-msg" aria-live="polite">
+            Entrez le premier numéro — les suivants s'incrémenteront
+            automatiquement.
+          </div>
+
+          <!-- Quick-add buttons -->
+          <div class="quick-types" role="group" aria-label="Ajout rapide">
+            <button
+              class="quick-btn"
+              data-type="C1"
+              data-montant="40"
+              onclick="quickAdd(this)"
             >
-            <i class="ti ti-chevron-down" id="type-drop-icon" aria-hidden="true"></i>
+              C1 <span>40 dh</span>
+            </button>
+            <button
+              class="quick-btn"
+              data-type="C2"
+              data-montant="60"
+              onclick="quickAdd(this)"
+            >
+              C2 <span>60 dh</span>
+            </button>
+            <button
+              class="quick-btn"
+              data-type="ACC"
+              data-montant="80"
+              onclick="quickAdd(this)"
+            >
+              ACC <span>80 dh</span>
+            </button>
+            <button
+              class="quick-btn"
+              data-type="CML"
+              data-montant="100"
+              onclick="quickAdd(this)"
+            >
+              CML <span>100 dh</span>
+            </button>
+            <button
+              class="quick-btn"
+              data-type="CMAP"
+              data-montant="40"
+              onclick="quickAdd(this)"
+            >
+              CMAP <span>40 dh</span>
+            </button>
           </div>
-        </div>
 
-        <!-- Montant -->
-        <div class="field">
-          <label for="inp-montant">Montant (dh)</label>
-          <input
-            type="text"
-            id="inp-montant"
-            placeholder="0"
-            inputmode="decimal"
-            autocomplete="off"
-            class="input-montant"
-            aria-label="Montant en dirhams"
+          <!-- Charts area (hidden until data exists) -->
+          <div
+            id="charts-area"
+            class="charts-area"
+            style="display: none"
+            aria-label="Graphiques"
           >
-        </div>
+            <div class="charts-header">
+              <span class="card-title">Graphiques</span>
+              <button
+                class="btn-icon btn-icon-sm"
+                id="btn-graphics-fullscreen"
+                onclick="toggleGraphicsFullscreen()"
+                style="display: none"
+                aria-label="Basculer le plein écran des graphiques"
+              >
+                <i class="ti ti-arrows-maximize" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="chart-block">
+              <div class="chart-label">Montant par type</div>
+              <canvas
+                id="chart-bar"
+                width="600"
+                height="160"
+                role="img"
+                aria-label="Graphique des montants par type"
+              ></canvas>
+            </div>
+            <div class="chart-block">
+              <div class="chart-label">Nombre par type</div>
+              <canvas
+                id="chart-count-bar"
+                width="600"
+                height="160"
+                role="img"
+                aria-label="Graphique du nombre de quittances par type"
+              ></canvas>
+            </div>
+          </div>
+        </section>
 
-        <!-- Actions -->
-        <div class="form-actions">
-          <button class="btn-primary" id="btn-submit" onclick="addEntry()" aria-label="Ajouter l'entrée">
-            <i class="ti ti-plus" aria-hidden="true"></i>
-            <span>Ajouter</span>
-          </button>
-          <button class="btn-secondary btn-icon-only" id="btn-cancel" style="display:none" onclick="cancelEdit()" title="Annuler la modification" aria-label="Annuler la modification">
-            <i class="ti ti-x" aria-hidden="true"></i>
-          </button>
-        </div>
-      </div>
+        <!-- ---- Column 2 : Entries list ---- -->
+        <section
+          class="card list-card list-section"
+          aria-label="Liste des entrées"
+        >
+          <div class="card-header">
+            <span class="card-title">Entrées</span>
+            <div class="header-actions">
+              <button
+                class="btn-ghost"
+                id="btn-fullscreen"
+                onclick="toggleFullscreen()"
+                style="display: none"
+                aria-label="Basculer le plein écran de la liste"
+              >
+                <i class="ti ti-arrows-maximize" aria-hidden="true"></i> Plein
+                écran
+              </button>
+              <button
+                class="btn-ghost btn-danger"
+                onclick="clearAll()"
+                aria-label="Effacer toutes les entrées"
+              >
+                <i class="ti ti-trash" aria-hidden="true"></i> Tout effacer
+              </button>
+            </div>
+          </div>
 
-      <!-- Hint bar -->
-      <div class="hint" id="hint-msg" aria-live="polite">
-        Entrez le premier numéro — les suivants s'incrémenteront automatiquement.
-      </div>
+          <div
+            id="entries-container"
+            class="entries-container"
+            role="region"
+            aria-live="polite"
+            aria-label="Tableau des quittances"
+          >
+            <div class="empty-state">
+              <i class="ti ti-inbox" aria-hidden="true"></i>
+              <p>Aucune entrée pour le moment.</p>
+            </div>
+          </div>
 
-      <!-- Quick-add buttons -->
-      <div class="quick-types" role="group" aria-label="Ajout rapide">
-        <button class="quick-btn" data-type="C1"   data-montant="40"  onclick="quickAdd(this)">C1   <span>40 dh</span></button>
-        <button class="quick-btn" data-type="C2"   data-montant="60"  onclick="quickAdd(this)">C2   <span>60 dh</span></button>
-        <button class="quick-btn" data-type="ACC"  data-montant="80"  onclick="quickAdd(this)">ACC  <span>80 dh</span></button>
-        <button class="quick-btn" data-type="CML"  data-montant="100" onclick="quickAdd(this)">CML  <span>100 dh</span></button>
-        <button class="quick-btn" data-type="CMAP" data-montant="40"  onclick="quickAdd(this)">CMAP <span>40 dh</span></button>
-      </div>
+          <div
+            id="pagination"
+            class="pagination"
+            style="display: none"
+            role="navigation"
+            aria-label="Pagination"
+          ></div>
+        </section>
 
-      <!-- Charts area (hidden until data exists) -->
-      <div id="charts-area" class="charts-area" style="display:none" aria-label="Graphiques">
-        <div class="charts-header">
-          <span class="card-title">Graphiques</span>
-          <button class="btn-icon btn-icon-sm" id="btn-graphics-fullscreen" onclick="toggleGraphicsFullscreen()" style="display:none;" aria-label="Basculer le plein écran des graphiques">
-            <i class="ti ti-arrows-maximize" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="chart-block">
-          <div class="chart-label">Montant par type</div>
-          <canvas id="chart-bar" width="600" height="160" role="img" aria-label="Graphique des montants par type"></canvas>
-        </div>
-        <div class="chart-block">
-          <div class="chart-label">Nombre par type</div>
-          <canvas id="chart-count-bar" width="600" height="160" role="img" aria-label="Graphique du nombre de quittances par type"></canvas>
-        </div>
-      </div>
+        <!-- ---- Column 3 : Stats + Info ---- -->
+        <section
+          class="card stats-card"
+          aria-label="Statistiques et informations"
+        >
+          <!-- Stats header -->
+          <div class="card-header">
+            <span class="card-title">Statistiques du jour</span>
+          </div>
 
-    </section>
+          <!-- KPI cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon accent" aria-hidden="true">
+                <i class="ti ti-receipt"></i>
+              </div>
+              <div class="stat-label">Total quittances</div>
+              <div class="stat-value" id="s-count">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green" aria-hidden="true">
+                <i class="ti ti-coins"></i>
+              </div>
+              <div class="stat-label">Total montant</div>
+              <div class="stat-value" id="s-total">0 dh</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange" aria-hidden="true">
+                <i class="ti ti-chart-bar"></i>
+              </div>
+              <div class="stat-label">Moyenne</div>
+              <div class="stat-value" id="s-avg">— dh</div>
+            </div>
+          </div>
 
-    <!-- ---- Column 2 : Entries list ---- -->
-    <section class="card list-card list-section" aria-label="Liste des entrées">
+          <!-- Per-type breakdown -->
+          <div class="breakdown-header">
+            <span class="card-title">Par type</span>
+          </div>
+          <div class="type-breakdown" id="type-breakdown" aria-live="polite">
+            <div class="empty-state small"><p>Aucune donnée.</p></div>
+          </div>
 
-      <div class="card-header">
-        <span class="card-title">Entrées</span>
-        <div class="header-actions">
-          <button class="btn-ghost" id="btn-fullscreen" onclick="toggleFullscreen()" style="display:none" aria-label="Basculer le plein écran de la liste">
-            <i class="ti ti-arrows-maximize" aria-hidden="true"></i> Plein écran
-          </button>
-          <button class="btn-ghost btn-danger" onclick="clearAll()" aria-label="Effacer toutes les entrées">
-            <i class="ti ti-trash" aria-hidden="true"></i> Tout effacer
-          </button>
-        </div>
-      </div>
+          <!-- Session info -->
+          <div class="info-section">
+            <div class="info-header">Informations</div>
+            <div class="field">
+              <label for="inp-operator">Opérateur</label>
+              <input
+                type="text"
+                id="inp-operator"
+                placeholder="Nom de l'opérateur"
+                oninput="saveSidebar()"
+              />
+            </div>
+            <div class="field">
+              <label for="inp-service">Service</label>
+              <input
+                type="text"
+                id="inp-service"
+                placeholder="Service"
+                oninput="saveSidebar()"
+              />
+            </div>
+            <div class="field">
+              <label for="inp-date">Date</label>
+              <input
+                type="text"
+                id="inp-date"
+                placeholder="jj/mm/aaaa"
+                maxlength="10"
+                oninput="saveSidebar()"
+                aria-label="Date au format jj/mm/aaaa"
+              />
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
 
-      <div id="entries-container" class="entries-container" role="region" aria-live="polite" aria-label="Tableau des quittances">
-        <div class="empty-state">
-          <i class="ti ti-inbox" aria-hidden="true"></i>
-          <p>Aucune entrée pour le moment.</p>
-        </div>
-      </div>
-
-      <div id="pagination" class="pagination" style="display:none" role="navigation" aria-label="Pagination"></div>
-
-    </section>
-
-    <!-- ---- Column 3 : Stats + Info ---- -->
-    <section class="card stats-card" aria-label="Statistiques et informations">
-
-      <!-- Stats header -->
-      <div class="card-header">
-        <span class="card-title">Statistiques du jour</span>
-      </div>
-
-      <!-- KPI cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon accent" aria-hidden="true"><i class="ti ti-receipt"></i></div>
-          <div class="stat-label">Total quittances</div>
-          <div class="stat-value" id="s-count">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon green" aria-hidden="true"><i class="ti ti-coins"></i></div>
-          <div class="stat-label">Total montant</div>
-          <div class="stat-value" id="s-total">0 dh</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon orange" aria-hidden="true"><i class="ti ti-chart-bar"></i></div>
-          <div class="stat-label">Moyenne</div>
-          <div class="stat-value" id="s-avg">— dh</div>
-        </div>
-      </div>
-
-      <!-- Per-type breakdown -->
-      <div class="breakdown-header">
-        <span class="card-title">Par type</span>
-      </div>
-      <div class="type-breakdown" id="type-breakdown" aria-live="polite">
-        <div class="empty-state small"><p>Aucune donnée.</p></div>
-      </div>
-
-      <!-- Session info -->
-      <div class="info-section">
-        <div class="info-header">Informations</div>
-        <div class="field">
-          <label for="inp-operator">Opérateur</label>
-          <input type="text" id="inp-operator" placeholder="Nom de l'opérateur" oninput="saveSidebar()">
-        </div>
-        <div class="field">
-          <label for="inp-service">Service</label>
-          <input type="text" id="inp-service" placeholder="Service" oninput="saveSidebar()">
-        </div>
-        <div class="field">
-          <label for="inp-date">Date</label>
-          <input type="text" id="inp-date" placeholder="jj/mm/aaaa" maxlength="10" oninput="saveSidebar()" aria-label="Date au format jj/mm/aaaa">
-        </div>
-      </div>
-
-    </section>
-
-  </main>
-</div>
-
-<!-- ================================================
+    <!-- ================================================
      FOOTER
      ================================================ -->
-<footer class="app-footer">
-  &copy; 2026 Gestion des quittances &mdash; Made by Mohamed El Boussoughti
-</footer>
+    <footer class="app-footer">
+      &copy; 2026 Gestion des quittances &mdash; Made by Mohamed El Boussoughti
+    </footer>
 
-<!-- ================================================
+    <!-- ================================================
      MODAL
      ================================================ -->
-<div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-msg">
-  <div class="modal-box">
-    <div class="modal-icon" aria-hidden="true"><i class="ti ti-alert-circle"></i></div>
-    <div class="modal-msg" id="modal-msg"></div>
-    <div class="modal-actions">
-      <button class="modal-btn modal-cancel" id="modal-cancel">Annuler</button>
-      <button class="modal-btn modal-confirm" id="modal-confirm">OK</button>
+    <div
+      id="modal-overlay"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-msg"
+    >
+      <div class="modal-box">
+        <div class="modal-icon" aria-hidden="true">
+          <i class="ti ti-alert-circle"></i>
+        </div>
+        <div class="modal-msg" id="modal-msg"></div>
+        <div class="modal-actions">
+          <button class="modal-btn modal-cancel" id="modal-cancel">
+            Annuler
+          </button>
+          <button class="modal-btn modal-confirm" id="modal-confirm">OK</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- Type dropdown portal (outside all overflow containers) -->
-<div class="type-dropdown" id="type-dropdown" role="listbox"></div>
+    <!-- Type dropdown portal (outside all overflow containers) -->
+    <div class="type-dropdown" id="type-dropdown" role="listbox"></div>
 
-<!-- ================================================
+    <!-- ================================================
      SCRIPTS — order matters: app → render → ui
      ================================================ -->
-<script src="js/app.js"></script>
-<script src="js/render.js"></script>
-<script src="js/ui.js"></script>
-
-</body>
+    <script src="js/app.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/ui.js"></script>
+  </body>
 </html>
