@@ -343,18 +343,18 @@ function shareWhatsApp() {
   }
 
   var lines = [];
-  lines.push('======== INFORMATIONS ============');
+  lines.push('== *INFORMATIONS* ==');
   lines.push('Opérateur : ' + op);
   lines.push('Service : ' + sv);
   lines.push('Date : ' + dt);
   lines.push('');
-  lines.push('======== STATISTIQUES ==============');
+  lines.push('== *STATISTIQUES* ==');
   var keys = Object.keys(byType);
   for (var i = 0; i < keys.length; i++) {
     lines.push(keys[i] + ' : ' + byType[keys[i]].count + ' (' + byType[keys[i]].total.toFixed(2) + ' dh)');
   }
   lines.push('');
-  lines.push('============ TOTAL =============');
+  lines.push('== *TOTAL* ==');
   lines.push('TOTAL QUITTANCES : ' + totalEntries);
   lines.push('TOTAL MONTANT : ' + total.toFixed(2) + ' dh');
 

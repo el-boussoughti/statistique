@@ -213,12 +213,13 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  /* Ctrl+Alt+0 — clear type & montant */
+  /* Ctrl+Alt+0 — clear type & montant, blur input */
   if (e.ctrlKey && e.altKey && e.key === '0') {
     e.preventDefault();
     document.getElementById('inp-type').value = '';
     document.getElementById('inp-montant').value = '';
     hideTypeDropdown();
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') document.activeElement.blur();
     return;
   }
 
