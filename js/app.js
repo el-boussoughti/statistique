@@ -116,7 +116,7 @@ function updateNField() {
   if (!inp || !hint) return;
   if (nextN === null) {
     inp.value       = '';
-    inp.placeholder = '101';
+    inp.placeholder = '388061';
     hint.textContent = "Entrez le premier numéro — les suivants s'incrémenteront automatiquement.";
     document.getElementById('n-warning').style.display = 'none';
   } else {
