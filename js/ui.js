@@ -183,8 +183,13 @@ document.addEventListener('keydown', function(e) {
   /* Ctrl+Alt+[1-5] — quick add fixed types */
   if (e.ctrlKey && e.altKey && e.key in fixedOpts && editIndex < 0) {
     e.preventDefault();
+    if (nextN === null) {
+      var manualN = parseInt(document.getElementById('inp-n').value);
+      if (!manualN || manualN < 1) { showModal('Entrez d\'abord un numéro de quittance manuellement.'); return; }
+      nextN = manualN;
+    }
     var opt = fixedOpts[e.key];
-    var n   = nextN !== null ? nextN : (parseInt(document.getElementById('inp-n').value) || 1);
+    var n   = nextN;
     entries.unshift({ n: n, type: opt.type, montant: opt.montant });
     nextN = n + 1;
     document.getElementById('inp-n').value = '';
@@ -208,9 +213,21 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  /* Ctrl+/ — focus type input */
+  /* Ctrl+Alt+0 — clear type & montant */
+  if (e.ctrlKey && e.altKey && e.key === '0') {
+    e.preventDefault();
+    document.getElementById('inp-type').value = '';
+    document.getElementById('inp-montant').value = '';
+    hideTypeDropdown();
+    return;
+  }
+
+  /* Ctrl+/ — clear type & montant, focus type */
   if (e.ctrlKey && e.key === '/') {
     e.preventDefault();
+    document.getElementById('inp-type').value = '';
+    document.getElementById('inp-montant').value = '';
+    hideTypeDropdown();
     document.getElementById('inp-type').focus();
   }
 });

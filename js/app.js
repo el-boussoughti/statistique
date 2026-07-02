@@ -135,7 +135,7 @@ function addEntry() {
 
   if (!type)                          { showModal('Choisissez ou tapez un type.'); return; }
   if (isNaN(montant) || montant <= 0) { showModal('Montant invalide.'); return; }
-  if (!n || n < 1)                    { showModal('Entrez un numéro de quittance valide.'); return; }
+  if (!n || n < 1)                    { showModal(nextN === null ? 'Entrez le premier numéro de quittance.' : 'Entrez un numéro de quittance valide.'); return; }
 
   /* Edit mode — N changed */
   if (editIndex >= 0 && editOriginalN !== null && n !== editOriginalN) {
@@ -226,9 +226,14 @@ function deleteEntry(i) {
 }
 
 function quickAdd(btn) {
+  if (nextN === null) {
+    var manualN = parseInt(document.getElementById('inp-n').value);
+    if (!manualN || manualN < 1) { showModal('Entrez d\'abord un numéro de quittance manuellement.'); return; }
+    nextN = manualN;
+  }
   var type    = btn.getAttribute('data-type');
   var montant = parseFloat(btn.getAttribute('data-montant'));
-  var n       = nextN !== null ? nextN : (parseInt(document.getElementById('inp-n').value) || 1);
+  var n       = nextN;
   entries.unshift({ n: n, type: type, montant: montant });
   nextN = n + 1;
   document.getElementById('inp-n').value = '';
@@ -319,6 +324,42 @@ function onTypeChange() {
   } else {
     mi.value = '';
   }
+}
+
+/* ---- WhatsApp share ---- */
+function shareWhatsApp() {
+  var op = document.getElementById('inp-operator').value || '—';
+  var sv = document.getElementById('inp-service').value  || '—';
+  var dt = document.getElementById('inp-date').value     || '—';
+
+  var totalEntries = entries.length;
+  var total = 0, countPaid = 0;
+  var byType = {};
+  for (var j = 0; j < totalEntries; j++) {
+    if (entries[j].type !== 'ANNUL') { total += entries[j].montant; countPaid++; }
+    if (!byType[entries[j].type]) byType[entries[j].type] = { count: 0, total: 0 };
+    byType[entries[j].type].count++;
+    byType[entries[j].type].total += entries[j].montant;
+  }
+
+  var lines = [];
+  lines.push('======== INFORMATIONS ============');
+  lines.push('Opérateur : ' + op);
+  lines.push('Service : ' + sv);
+  lines.push('Date : ' + dt);
+  lines.push('');
+  lines.push('======== STATISTIQUES ==============');
+  var keys = Object.keys(byType);
+  for (var i = 0; i < keys.length; i++) {
+    lines.push(keys[i] + ' : ' + byType[keys[i]].count + ' (' + byType[keys[i]].total.toFixed(2) + ' dh)');
+  }
+  lines.push('');
+  lines.push('============ TOTAL =============');
+  lines.push('TOTAL QUITTANCES : ' + totalEntries);
+  lines.push('TOTAL MONTANT : ' + total.toFixed(2) + ' dh');
+
+  var text = encodeURIComponent(lines.join('\n'));
+  window.open('https://wa.me/?text=' + text, '_blank');
 }
 
 /* ---- Excel import/export ---- */
