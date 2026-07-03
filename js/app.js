@@ -26,27 +26,28 @@ var typeGroups = [
     { value: 'C2',   text: 'C2',             hint: '60 dh'  },
     { value: 'ACC',  text: 'ACC',            hint: '80 dh'  },
     { value: 'CML',  text: 'CML',            hint: '100 dh' },
-    { value: 'CMAP', text: 'CMAP',           hint: '40 dh'  },
+    { value: 'CMD', text: 'CMD',            hint: '40 dh'  },
   ]},
   { label: 'Montant variable', items: [
     { value: 'RX',    text: 'RX',            hint: '' },
     { value: 'HOSP',  text: 'Hospitalisation', hint: '' },
     { value: 'LABO',  text: 'Labo',          hint: '' },
     { value: 'ANNUL', text: 'Annulation',    hint: '' },
+    { value: 'EXP',   text: 'EXP',           hint: '' },
   ]},
 ];
 
-var fixedMontants = { C1: 40, C2: 60, ACC: 80, CML: 100, CMAP: 40 };
+var fixedMontants = { C1: 40, C2: 60, ACC: 80, CML: 100, CMD: 40 };
 
 var fixedOpts = {
   '1': { type: 'C1',   montant: 40  },
   '2': { type: 'C2',   montant: 60  },
   '3': { type: 'ACC',  montant: 80  },
   '4': { type: 'CML',  montant: 100 },
-  '5': { type: 'CMAP', montant: 40  },
+  '5': { type: 'CMD', montant: 40  },
 };
 
-var typeKeys = { '1': 'C1', '2': 'C2', '3': 'ACC', '4': 'CML', '5': 'CMAP' };
+var typeKeys = { '1': 'C1', '2': 'C2', '3': 'ACC', '4': 'CML', '5': 'CMD' };
 
 /* ---- Storage ---- */
 function loadState() {
@@ -309,8 +310,8 @@ function onTypeChange() {
   var t   = inp.value.trim();
   var mi  = document.getElementById('inp-montant');
 
-  var shortMap = { r: 'RX', l: 'Labo', a: 'ANNUL', h: 'HOSP' };
-  var m = t.match(/^([rlhaRLHA])(\d+)$/);
+  var shortMap = { r: 'RX', l: 'Labo', a: 'ANNUL', h: 'HOSP', e: 'EXP' };
+  var m = t.match(/^([rlhaeRLHAE])(\d+)$/);
   if (m && shortMap[m[1].toLowerCase()]) {
     inp.value = shortMap[m[1].toLowerCase()];
     mi.value  = parseInt(m[2]);

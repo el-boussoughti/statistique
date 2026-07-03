@@ -201,7 +201,7 @@ document.addEventListener('keydown', function(e) {
 
   /* Ctrl+Alt+[r,l,h,a] — set variable type */
   if (e.ctrlKey && e.altKey) {
-    var typeMap = { r: 'RX', l: 'Labo', h: 'HOSP', a: 'ANNUL' };
+    var typeMap = { r: 'RX', l: 'Labo', h: 'HOSP', a: 'ANNUL', e: 'EXP' };
     var k = e.key.toLowerCase();
     if (k in typeMap) {
       e.preventDefault();
