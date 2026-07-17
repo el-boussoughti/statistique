@@ -284,6 +284,16 @@ function deleteEntry(i) {
     'Supprimer la quittance N°' + e.n + ' (' + e.type + ', ' + e.montant.toFixed(2) + ' dh)\u202f?',
     function() {
       var deleted = entries.splice(i, 1)[0];
+      
+      // Auto-resync the input N° to the new maximum if the last quittance was deleted
+      if (entries.length > 0) {
+        nextN = entries[0].n + 1;
+      } else {
+        nextN = null;
+        document.getElementById('inp-n').value = '';
+      }
+      updateNField();
+
       saveState();
       render();
       if (typeof showUndoToast === 'function') {

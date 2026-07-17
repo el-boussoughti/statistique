@@ -41,41 +41,41 @@
         </div>
         <div class="topbar-actions">
           <button
-            class="btn-icon"
-            onclick="showAboutModal()"
-            title="À propos"
+          class="btn-icon"
+          id="theme-toggle-btn"
+          onclick="toggleTheme()"
+          title="Changer le thème"
           >
-            <i class="ti ti-info-circle"></i>
-          </button>
-          <button
-            class="btn-icon"
-            id="theme-toggle-btn"
-            onclick="toggleTheme()"
-            title="Changer le thème"
-          >
-            <i class="ti ti-moon" id="theme-icon"></i>
-          </button>
-          <button
-            class="btn-icon"
+          <i class="ti ti-moon" id="theme-icon"></i>
+        </button>
+        <button
+        class="btn-icon"
             onclick="document.getElementById('import-file').click()"
             title="Importer depuis Excel (xlsx)"
-          >
+            >
             <i class="ti ti-file-import"></i>
           </button>
           <button
-            class="btn-icon"
-            onclick="checkMissingInfo(exportExcel)"
-            title="Exporter en Excel"
+          class="btn-icon"
+          onclick="checkMissingInfo(exportExcel)"
+          title="Exporter en Excel"
           >
-            <i class="ti ti-file-spreadsheet"></i>
-          </button>
-          <button
-            class="btn-icon"
-            onclick="checkMissingInfo(shareWhatsApp)"
-            title="Partager sur WhatsApp"
-          >
-            <i class="ti ti-brand-whatsapp"></i>
-          </button>
+          <i class="ti ti-file-spreadsheet"></i>
+        </button>
+        <button
+        class="btn-icon"
+        onclick="checkMissingInfo(shareWhatsApp)"
+        title="Partager sur WhatsApp"
+        >
+        <i class="ti ti-brand-whatsapp"></i>
+      </button>
+      <button
+        class="btn-icon"
+        onclick="showAboutModal()"
+        title="À propos"
+      >
+        <i class="ti ti-info-circle"></i>
+      </button>
           <input
             type="file"
             id="import-file"

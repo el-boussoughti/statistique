@@ -514,6 +514,12 @@ function undoDelete() {
     entries.sort(function(a, b) {
       return b.n - a.n;
     });
+
+    // Auto-resync nextN to the restored maximum
+    if (entries.length > 0) {
+      nextN = entries[0].n + 1;
+    }
+    updateNField();
     
     saveState();
     render();
