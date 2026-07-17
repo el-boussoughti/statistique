@@ -32,6 +32,137 @@ document.getElementById('modal-overlay').addEventListener('click', function(e) {
 });
 
 /* =====================================================
+   CLEAR-SESSION MODAL
+   ===================================================== */
+function openClearSessionModal() {
+  var overlay = document.getElementById('clear-modal-overlay');
+
+  /* Pre-fill modal fields with current sidebar values */
+  document.getElementById('cm-operator').value  = document.getElementById('inp-operator').value;
+  document.getElementById('cm-service').value   = document.getElementById('inp-service').value;
+  document.getElementById('cm-registre').value  = document.getElementById('inp-registre').value;
+  document.getElementById('cm-quitt-du').value  = document.getElementById('inp-quitt-du').value;
+  document.getElementById('cm-quitt-au').value  = document.getElementById('inp-quitt-au').value;
+  /* Always reset date to today */
+  document.getElementById('cm-date').value = setToday();
+
+  overlay.classList.add('open');
+  /* Focus first input */
+  setTimeout(function() { document.getElementById('cm-operator').focus(); }, 50);
+}
+
+document.getElementById('clear-modal-confirm').addEventListener('click', function() {
+  var overlay = document.getElementById('clear-modal-overlay');
+  overlay.classList.remove('open');
+
+  /* Write new info values back to sidebar inputs */
+  document.getElementById('inp-operator').value  = document.getElementById('cm-operator').value;
+  document.getElementById('inp-service').value   = document.getElementById('cm-service').value;
+  document.getElementById('inp-date').value      = document.getElementById('cm-date').value;
+  document.getElementById('inp-registre').value  = document.getElementById('cm-registre').value;
+  document.getElementById('inp-quitt-du').value  = document.getElementById('cm-quitt-du').value;
+  document.getElementById('inp-quitt-au').value  = document.getElementById('cm-quitt-au').value;
+
+  /* Clear all entries */
+  entries = [];
+  nextN   = null;
+  document.getElementById('inp-n').value = '';
+  saveState();
+  updateNField();
+  render();
+});
+
+document.getElementById('clear-modal-cancel').addEventListener('click', function() {
+  document.getElementById('clear-modal-overlay').classList.remove('open');
+});
+
+/* Close on backdrop click */
+document.getElementById('clear-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+/* close on Escape */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('clear-modal-overlay').classList.remove('open');
+    document.getElementById('info-modal-overlay').classList.remove('open');
+  }
+});
+
+/* =====================================================
+   INFO MISSING MODAL (Validation before export)
+   ===================================================== */
+var pendingExportCallback = null;
+
+function checkMissingInfo(callback) {
+  var op = document.getElementById('inp-operator').value.trim();
+  var sv = document.getElementById('inp-service').value.trim();
+  var dt = document.getElementById('inp-date').value.trim();
+  var reg = document.getElementById('inp-registre').value.trim();
+  var qDu = document.getElementById('inp-quitt-du').value.trim();
+  var qAu = document.getElementById('inp-quitt-au').value.trim();
+
+  if (!op || !sv || !dt || !reg || !qDu || !qAu) {
+    // Missing info -> show modal
+    pendingExportCallback = callback;
+    document.getElementById('im-operator').value = op;
+    document.getElementById('im-service').value = sv;
+    document.getElementById('im-date').value = dt || setToday();
+    document.getElementById('im-registre').value = reg;
+    document.getElementById('im-quitt-du').value = qDu;
+    document.getElementById('im-quitt-au').value = qAu;
+    
+    document.getElementById('info-modal-overlay').classList.add('open');
+    setTimeout(function() { document.getElementById('im-operator').focus(); }, 50);
+  } else {
+    // All good -> proceed immediately
+    callback();
+  }
+}
+
+document.getElementById('info-modal-confirm').addEventListener('click', function() {
+  var op = document.getElementById('im-operator').value.trim();
+  var sv = document.getElementById('im-service').value.trim();
+  var dt = document.getElementById('im-date').value.trim();
+  var reg = document.getElementById('im-registre').value.trim();
+  var qDu = document.getElementById('im-quitt-du').value.trim();
+  var qAu = document.getElementById('im-quitt-au').value.trim();
+
+  if (!op || !sv || !dt || !reg || !qDu || !qAu) {
+    showModal("Veuillez remplir tous les champs avant de continuer.");
+    return;
+  }
+
+  // Update sidebar inputs
+  document.getElementById('inp-operator').value = op;
+  document.getElementById('inp-service').value = sv;
+  document.getElementById('inp-date').value = dt;
+  document.getElementById('inp-registre').value = reg;
+  document.getElementById('inp-quitt-du').value = qDu;
+  document.getElementById('inp-quitt-au').value = qAu;
+
+  saveState();
+  document.getElementById('info-modal-overlay').classList.remove('open');
+
+  if (pendingExportCallback) {
+    pendingExportCallback();
+    pendingExportCallback = null;
+  }
+});
+
+document.getElementById('info-modal-cancel').addEventListener('click', function() {
+  document.getElementById('info-modal-overlay').classList.remove('open');
+  pendingExportCallback = null;
+});
+
+document.getElementById('info-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.remove('open');
+    pendingExportCallback = null;
+  }
+});
+
+/* =====================================================
    TYPE DROPDOWN
    ===================================================== */
 function positionDropdown() {
@@ -201,7 +332,7 @@ document.addEventListener('keydown', function(e) {
 
   /* Ctrl+Alt+[r,l,h,a] — set variable type */
   if (e.ctrlKey && e.altKey) {
-    var typeMap = { r: 'RX', l: 'Labo', h: 'HOSP', a: 'ANNUL', e: 'EXP' };
+    var typeMap = { r: 'RX', l: 'LABO', h: 'HOSP', a: 'ANNUL', e: 'EXP' };
     var k = e.key.toLowerCase();
     if (k in typeMap) {
       e.preventDefault();
@@ -271,9 +402,134 @@ window.addEventListener('resize', function() {
 });
 
 /* =====================================================
+   THEME TOGGLE
+   ===================================================== */
+function toggleTheme() {
+  var current = document.documentElement.getAttribute('data-theme');
+  var isDark = false;
+  if (current === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('theme', 'light');
+  } else if (current === 'light') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('theme', 'dark');
+    isDark = true;
+  } else {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+      isDark = true;
+    }
+  }
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  var current = document.documentElement.getAttribute('data-theme');
+  var btn = document.getElementById('theme-toggle-btn');
+  if (!btn) return;
+  var isDark = current === 'dark' || (current !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  if (isDark) {
+    btn.innerHTML = '<i class="ti ti-sun"></i>';
+    btn.title = "Passer au thème clair";
+  } else {
+    btn.innerHTML = '<i class="ti ti-moon"></i>';
+    btn.title = "Passer au thème sombre";
+  }
+}
+
+function initTheme() {
+  var saved = localStorage.getItem('theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+  updateThemeIcon();
+}
+
+/* =====================================================
+   ABOUT MODAL
+   ===================================================== */
+function showAboutModal() {
+  var modal = document.getElementById('about-modal');
+  if (modal) modal.classList.add('open');
+}
+
+function closeAboutModal() {
+  var modal = document.getElementById('about-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+document.getElementById('about-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+/* =====================================================
+   UNDO TOAST
+   ===================================================== */
+var undoTimeout = null;
+var pendingUndoEntry = null;
+
+function showUndoToast(deletedEntry) {
+  var container = document.getElementById('toast-container');
+  if (!container) return;
+
+  // Clear existing toast if any
+  container.innerHTML = '';
+  clearTimeout(undoTimeout);
+
+  pendingUndoEntry = deletedEntry;
+
+  var toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = 
+    '<div class="toast-message">Quittance N°' + deletedEntry.n + ' supprimée.</div>' +
+    '<button class="toast-undo-btn" onclick="undoDelete()">Annuler</button>';
+  
+  container.appendChild(toast);
+
+  // Trigger reflow for transition
+  void toast.offsetWidth;
+  toast.classList.add('show');
+
+  undoTimeout = setTimeout(function() {
+    toast.classList.remove('show');
+    setTimeout(function() {
+      if (toast.parentNode === container) {
+        container.removeChild(toast);
+      }
+      pendingUndoEntry = null;
+    }, 300); // Wait for transition
+  }, 5000); // 5 seconds
+}
+
+function undoDelete() {
+  if (pendingUndoEntry) {
+    entries.unshift(pendingUndoEntry);
+    
+    // Sort array by N° descending
+    entries.sort(function(a, b) {
+      return b.n - a.n;
+    });
+    
+    saveState();
+    render();
+
+    var container = document.getElementById('toast-container');
+    container.innerHTML = '';
+    clearTimeout(undoTimeout);
+    pendingUndoEntry = null;
+  }
+}
+
+/* =====================================================
    INITIALISATION
    ===================================================== */
 (function init() {
+  initTheme();
   loadState();
 
   /* Set today if date is empty */

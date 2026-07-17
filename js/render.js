@@ -35,24 +35,69 @@ function render() {
     gfsBtn.title = graphicsFullscreen ? 'Réduire' : 'Plein écran';
   }
 
+  /* ---- Sequence Warning ---- */
+  var seqWarn = document.getElementById('sequence-warning');
+  if (seqWarn) {
+    if (totalEntries > 1) {
+      var missing = findMissingQuittances();
+      if (missing.length > 0) {
+        seqWarn.style.display = 'flex';
+        var rev = missing.reverse();
+        var maxShow = 10;
+        var displayStr = '';
+        if (rev.length <= maxShow) {
+          displayStr = rev.join(', ');
+        } else {
+          displayStr = rev.slice(0, maxShow).join(', ') + ' ... et ' + (rev.length - maxShow) + ' autres';
+        }
+        
+        seqWarn.innerHTML = '<i class="ti ti-alert-triangle" aria-hidden="true" style="flex-shrink:0; margin-top:2px;"></i> ' +
+          '<span>Quittance(s) manquante(s) dans la séquence : <strong>' + displayStr + '</strong></span>';
+      } else {
+        seqWarn.style.display = 'none';
+      }
+    } else {
+      seqWarn.style.display = 'none';
+    }
+  }
+
+  /* ---- Search Input Visibility ---- */
+  var searchInp = document.getElementById('inp-search');
+  if (searchInp) {
+    searchInp.style.display = fullscreen ? 'inline-block' : 'none';
+  }
+
   /* ---- Entries table ---- */
   var cont = document.getElementById('entries-container');
 
-  if (totalEntries === 0) {
-    cont.innerHTML = '<div class="empty-state"><i class="ti ti-inbox"></i><p>Aucune entrée pour le moment.</p></div>';
+  var filteredEntries = entries;
+  if (fullscreen && searchQuery) {
+    filteredEntries = entries.filter(function(e) {
+      return e.n.toString().includes(searchQuery) || e.type.toLowerCase().includes(searchQuery);
+    });
+  }
+  
+  var totalView = filteredEntries.length;
+
+  if (totalView === 0) {
+    var msg = (entries.length === 0) ? 'Aucune entrée pour le moment.' : 'Aucun résultat trouvé.';
+    cont.innerHTML = '<div class="empty-state"><i class="ti ti-inbox"></i><p>' + msg + '</p></div>';
   } else {
+    var totalPages = Math.ceil(totalView / pageSize);
+    if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+
     var sorted = sortBy
-      ? entries.slice().sort(function(a, b) {
+      ? filteredEntries.slice().sort(function(a, b) {
           var va = a[sortBy], vb = b[sortBy];
           if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb + '').toLowerCase(); }
           if (va < vb) return sortAsc ? -1 : 1;
           if (va > vb) return sortAsc ?  1 : -1;
           return 0;
         })
-      : entries;
+      : filteredEntries;
 
     var startIdx = showAll ? 0 : (currentPage - 1) * pageSize;
-    var endIdx   = showAll ? totalEntries : Math.min(totalEntries, currentPage * pageSize);
+    var endIdx   = showAll ? totalView : Math.min(totalView, currentPage * pageSize);
 
     function arrow(col) {
       if (sortBy !== col) return '';
@@ -95,7 +140,7 @@ function render() {
 
   /* ---- Pagination ---- */
   var pag = document.getElementById('pagination');
-  if (totalEntries > pageSize && !showAll) {
+  if (totalView > pageSize && !showAll) {
     pag.style.display = 'flex';
     var html = '';
     html += '<button onclick="goPage(' + (currentPage - 1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '><i class="ti ti-chevron-left"></i></button>';
@@ -107,7 +152,7 @@ function render() {
       html += '<button onclick="goPage(' + p + ')" class="' + (p === currentPage ? 'active' : '') + '">' + p + '</button>';
     }
     html += '<button onclick="goPage(' + (currentPage + 1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '><i class="ti ti-chevron-right"></i></button>';
-    html += '<span class="page-info">' + totalEntries + ' entrées</span>';
+    html += '<span class="page-info">' + totalView + ' entrées</span>';
     pag.innerHTML = html;
   } else {
     pag.style.display = 'none';

@@ -15,8 +15,12 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css"
     />
-    <!-- XLSX -->
+    <!-- XLSX (used for import only) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- ExcelJS (used for styled export) -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <!-- html2canvas (used for WhatsApp image export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- App styles -->
     <link rel="stylesheet" href="css/style.css" />
   </head>
@@ -38,6 +42,21 @@
         <div class="topbar-actions">
           <button
             class="btn-icon"
+            onclick="showAboutModal()"
+            title="À propos"
+          >
+            <i class="ti ti-info-circle"></i>
+          </button>
+          <button
+            class="btn-icon"
+            id="theme-toggle-btn"
+            onclick="toggleTheme()"
+            title="Changer le thème"
+          >
+            <i class="ti ti-moon" id="theme-icon"></i>
+          </button>
+          <button
+            class="btn-icon"
             onclick="document.getElementById('import-file').click()"
             title="Importer depuis Excel (xlsx)"
           >
@@ -45,14 +64,14 @@
           </button>
           <button
             class="btn-icon"
-            onclick="exportExcel()"
+            onclick="checkMissingInfo(exportExcel)"
             title="Exporter en Excel"
           >
             <i class="ti ti-file-spreadsheet"></i>
           </button>
           <button
             class="btn-icon"
-            onclick="shareWhatsApp()"
+            onclick="checkMissingInfo(shareWhatsApp)"
             title="Partager sur WhatsApp"
           >
             <i class="ti ti-brand-whatsapp"></i>
@@ -286,6 +305,15 @@
           <div class="card-header">
             <span class="card-title">Entrées</span>
             <div class="header-actions">
+              <input 
+                type="text" 
+                id="inp-search" 
+                class="search-input" 
+                placeholder="Recherche N° ou Type..." 
+                oninput="onSearchChange()" 
+                style="display: none;"
+                autocomplete="off"
+              />
               <button
                 class="btn-ghost"
                 id="btn-fullscreen"
@@ -305,6 +333,14 @@
               </button>
             </div>
           </div>
+
+          <div
+            id="sequence-warning"
+            class="sequence-warning"
+            style="display: none"
+            role="alert"
+            aria-live="assertive"
+          ></div>
 
           <div
             id="entries-container"
@@ -403,6 +439,36 @@
                 aria-label="Date au format jj/mm/aaaa"
               />
             </div>
+            <div class="field">
+              <label for="inp-registre">Registre N°</label>
+              <input
+                type="text"
+                id="inp-registre"
+                placeholder="Ex: 699"
+                oninput="saveSidebar()"
+                aria-label="Numéro de registre"
+              />
+            </div>
+            <div class="field">
+              <label for="inp-quitt-du">Quittances N° Du</label>
+              <input
+                type="text"
+                id="inp-quitt-du"
+                placeholder="Ex: 393501"
+                oninput="saveSidebar()"
+                aria-label="Numéro de quittance du"
+              />
+            </div>
+            <div class="field">
+              <label for="inp-quitt-au">Au</label>
+              <input
+                type="text"
+                id="inp-quitt-au"
+                placeholder="Ex: 393602"
+                oninput="saveSidebar()"
+                aria-label="Numéro de quittance au"
+              />
+            </div>
           </div>
         </section>
       </main>
@@ -439,8 +505,235 @@
       </div>
     </div>
 
+    <!-- ================================================
+     CLEAR-SESSION MODAL
+     ================================================ -->
+    <div
+      id="clear-modal-overlay"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clear-modal-title"
+    >
+      <div class="modal-box clear-modal-box">
+        <div class="modal-icon clear-modal-icon" aria-hidden="true">
+          <i class="ti ti-refresh"></i>
+        </div>
+        <div class="clear-modal-title" id="clear-modal-title">Nouvelle session</div>
+        <p class="clear-modal-sub">Remplissez les informations pour la nouvelle session. Les entrées actuelles seront effacées.</p>
+
+        <div class="clear-modal-form">
+          <div class="field">
+            <label for="cm-operator">Opérateur</label>
+            <input type="text" id="cm-operator" placeholder="Nom de l'opérateur" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="cm-service">Service</label>
+            <input type="text" id="cm-service" placeholder="Service" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="cm-date">Date</label>
+            <input type="text" id="cm-date" placeholder="jj/mm/aaaa" maxlength="10" autocomplete="off" aria-label="Date au format jj/mm/aaaa" />
+          </div>
+          <div class="field">
+            <label for="cm-registre">Registre N°</label>
+            <input type="text" id="cm-registre" placeholder="Ex: 699" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="cm-quitt-du">Quittances N° Du</label>
+            <input type="text" id="cm-quitt-du" placeholder="Ex: 393501" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="cm-quitt-au">Au</label>
+            <input type="text" id="cm-quitt-au" placeholder="Ex: 393602" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="modal-actions clear-modal-actions">
+          <button class="modal-btn modal-cancel" id="clear-modal-cancel">Annuler</button>
+          <button class="modal-btn modal-confirm clear-modal-confirm" id="clear-modal-confirm">
+            <i class="ti ti-trash" aria-hidden="true"></i> Effacer &amp; Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================
+     INFO MISSING MODAL
+     ================================================ -->
+    <div
+      id="info-modal-overlay"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="info-modal-title"
+    >
+      <div class="modal-box clear-modal-box">
+        <div class="modal-icon" aria-hidden="true" style="background: rgba(59, 130, 246, 0.12); color: #3b82f6;">
+          <i class="ti ti-info-circle"></i>
+        </div>
+        <div class="clear-modal-title" id="info-modal-title">Informations manquantes</div>
+        <p class="clear-modal-sub">Veuillez compléter les informations avant de continuer l'export.</p>
+
+        <div class="clear-modal-form">
+          <div class="field">
+            <label for="im-operator">Opérateur</label>
+            <input type="text" id="im-operator" placeholder="Nom de l'opérateur" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="im-service">Service</label>
+            <input type="text" id="im-service" placeholder="Service" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="im-date">Date</label>
+            <input type="text" id="im-date" placeholder="jj/mm/aaaa" maxlength="10" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="im-registre">Registre N°</label>
+            <input type="text" id="im-registre" placeholder="Ex: 699" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="im-quitt-du">Quittances N° Du</label>
+            <input type="text" id="im-quitt-du" placeholder="Ex: 393501" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="im-quitt-au">Au</label>
+            <input type="text" id="im-quitt-au" placeholder="Ex: 393602" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="modal-actions clear-modal-actions">
+          <button class="modal-btn modal-cancel" id="info-modal-cancel">Annuler</button>
+          <button class="modal-btn modal-confirm" id="info-modal-confirm" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);">
+            Continuer <i class="ti ti-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================
+     ABOUT MODAL
+     ================================================ -->
+    <div
+      id="about-modal"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="about-modal-title"
+    >
+      <div class="modal-box clear-modal-box" style="max-width: 500px;">
+        <div class="modal-icon" aria-hidden="true" style="background: rgba(124, 58, 237, 0.12); color: #7c3aed;">
+          <i class="ti ti-info-circle"></i>
+        </div>
+        <div class="clear-modal-title" id="about-modal-title">À propos de l'application</div>
+        
+        <div style="font-size: 14px; color: var(--text-2); margin-top: 16px; line-height: 1.6;">
+          <p style="margin-bottom: 16px;">
+            Cette application a été créée par <strong>Mohamed El Boussoughti</strong> pour aider ses amis à la caisse à faire les statistiques plus facilement.
+          </p>
+          
+          <h4 style="color: var(--text-1); font-weight: 600; margin-bottom: 8px;">Guide d'utilisation</h4>
+          <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 16px;">
+            <li><strong>Auto-incrémentation :</strong> Le numéro de quittance s'incrémente automatiquement et se resynchronise si vous insérez une ancienne quittance.</li>
+            <li><strong>Avertissements :</strong> L'application vous avertit en cas de trou (quittance manquante) dans votre séquence.</li>
+            <li><strong>Mode sombre :</strong> Utilisez le bouton lune/soleil en haut pour changer le thème.</li>
+          </ul>
+
+          <h4 style="color: var(--text-1); font-weight: 600; margin-bottom: 8px;">Raccourcis Clavier</h4>
+          <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 16px;">
+            <li><strong>Ctrl + Alt + [1 à 5]</strong> : Ajouter rapidement (1=C1, 2=C2, 3=ACC, 4=CML, 5=CMD)</li>
+            <li><strong>Ctrl + Alt + [R, L, H, A, E]</strong> : Définir le type (RX, LABO, HOSP, ANNUL, EXP)</li>
+            <li><strong>Ctrl + /</strong> : Effacer la saisie et se concentrer sur le champ Type</li>
+            <li><strong>Ctrl + Alt + 0</strong> : Effacer la saisie et retirer le focus</li>
+            <li><strong>Entrée</strong> : Enregistrer (depuis le champ Montant)</li>
+          </ul>
+        </div>
+
+        <div class="modal-actions clear-modal-actions" style="margin-top: 24px; justify-content: flex-end;">
+          <button class="modal-btn modal-cancel" onclick="closeAboutModal()">Fermer</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Type dropdown portal (outside all overflow containers) -->
     <div class="type-dropdown" id="type-dropdown" role="listbox"></div>
+
+    <!-- ================================================
+     WHATSAPP IMAGE EXPORT TEMPLATE (HIDDEN)
+     ================================================ -->
+    <div id="wa-export-container" class="wa-export-container">
+      <div id="wa-export-content" class="wa-export-content">
+        <table class="wa-table" cellspacing="0" cellpadding="0">
+          <colgroup>
+            <col style="width: 130px;">
+            <col style="width: 158px;">
+            <col style="width: 145px;">
+            <col style="width: 155px;">
+            <col style="width: 103px;">
+          </colgroup>
+          <tr><td colspan="5" class="wa-title">CENTRE HOSPITALIER REGIONAL DE RABAT</td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr>
+            <td class="wa-label wa-black-border">SITE</td>
+            <td id="wa-site" colspan="2" class="wa-val wa-black-border wa-bold"></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr>
+            <td></td>
+            <td colspan="2" class="wa-label wa-black-border">STATISTIQUE DU</td>
+            <td id="wa-date" class="wa-val wa-black-border wa-yellow wa-center wa-bold"></td>
+            <td></td>
+          </tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr>
+            <td class="wa-label wa-black-border">NOM</td>
+            <td id="wa-nom" colspan="2" class="wa-val wa-black-border wa-bold wa-center"></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr>
+            <td class="wa-label wa-black-border">REGISTRE N°</td>
+            <td id="wa-registre" colspan="2" class="wa-val wa-black-border wa-bold wa-center"></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr>
+            <td class="wa-label wa-black-border">QUITTANCES N° DU</td>
+            <td id="wa-quitt-du" class="wa-val wa-black-border wa-bold wa-center"></td>
+            <td class="wa-label wa-center wa-black-border">AU</td>
+            <td id="wa-quitt-au" colspan="2" class="wa-val wa-black-border wa-bold wa-center"></td>
+          </tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr>
+            <td></td>
+            <td class="wa-label wa-yellow wa-center wa-black-border">NOMBRE</td>
+            <td class="wa-label wa-yellow wa-center wa-black-border">MONTANT</td>
+            <td colspan="2" class="wa-label wa-yellow wa-center wa-black-border">PLAGE QUITTANCE</td>
+          </tr>
+          <tr><td class="wa-type-label">C1</td><td id="wa-nb-c1" class="wa-num"></td><td id="wa-mt-c1" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">C2</td><td id="wa-nb-c2" class="wa-num"></td><td id="wa-mt-c2" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">HOSP</td><td id="wa-nb-hosp" class="wa-num"></td><td id="wa-mt-hosp" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">ACC</td><td id="wa-nb-acc" class="wa-num"></td><td id="wa-mt-acc" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">RX</td><td id="wa-nb-rx" class="wa-num"></td><td id="wa-mt-rx" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">EXP</td><td id="wa-nb-exp" class="wa-num"></td><td id="wa-mt-exp" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">LABO</td><td id="wa-nb-labo" class="wa-num"></td><td id="wa-mt-labo" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">CML</td><td id="wa-nb-cml" class="wa-num"></td><td id="wa-mt-cml" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-label">CMD</td><td id="wa-nb-cmd" class="wa-num"></td><td id="wa-mt-cmd" class="wa-num"></td><td colspan="2" class="wa-black-border"></td></tr>
+          <tr><td class="wa-type-annul">ANNULATION</td><td id="wa-nb-annul" class="wa-num-annul"></td><td id="wa-mt-annul" class="wa-num-annul"></td><td colspan="2" class="wa-num-annul"></td></tr>
+          <tr><td class="wa-type-total">TOTAL</td><td id="wa-nb-total" class="wa-num-total"></td><td id="wa-mt-total" class="wa-num-total"></td><td colspan="2" class="wa-total-black"></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================================================
+     TOAST CONTAINER
+     ================================================ -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
     <!-- ================================================
      SCRIPTS — order matters: app → render → ui
