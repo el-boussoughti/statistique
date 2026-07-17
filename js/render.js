@@ -121,6 +121,7 @@ function render() {
           '<td style="' + strikeStyle + 'font-weight:600;">' + e.montant.toFixed(2) + ' <span style="font-size:11px;color:var(--text-3);font-weight:400;">dh</span></td>' +
           '<td><div class="row-actions">' +
             '<button class="action-btn" onclick="editEntry(' + realIdx + ')" title="Modifier"><i class="ti ti-pencil"></i></button>' +
+            '<button class="action-btn" onclick="annulerEntry(' + realIdx + ')" title="Annuler"><i class="ti ti-ban"></i></button>' +
             '<button class="action-btn danger" onclick="deleteEntry(' + realIdx + ')" title="Supprimer"><i class="ti ti-trash"></i></button>' +
           '</div></td>' +
         '</tr>';

@@ -318,6 +318,19 @@ function deleteEntry(i) {
   );
 }
 
+function annulerEntry(i) {
+  var e = entries[i];
+  if (e.type === 'ANNUL') return;
+  showModal(
+    'Annuler la quittance N°' + e.n + ' (' + e.type + ', ' + e.montant.toFixed(2) + ' dh) ?\nLe type sera changé en ANNUL.',
+    function() {
+      entries[i].type = 'ANNUL';
+      saveState();
+      render();
+    }
+  );
+}
+
 function quickAdd(btn) {
   var manualN = parseInt(document.getElementById('inp-n').value);
   if (!manualN || manualN < 1) {
