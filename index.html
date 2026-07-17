@@ -305,15 +305,17 @@
           <div class="card-header">
             <span class="card-title">Entrées</span>
             <div class="header-actions">
-              <input 
-                type="text" 
-                id="inp-search" 
-                class="search-input" 
-                placeholder="Recherche N° ou Type..." 
-                oninput="onSearchChange()" 
-                style="display: none;"
-                autocomplete="off"
-              />
+              <div class="search-container">
+                <input 
+                  type="text" 
+                  id="inp-search" 
+                  class="search-input" 
+                  placeholder="Recherche N° ou Type..." 
+                  oninput="onSearchChange()" 
+                  autocomplete="off"
+                />
+                <i class="ti ti-x search-clear" id="search-clear-btn" onclick="clearSearch()" style="display: none;" title="Effacer la recherche"></i>
+              </div>
               <button
                 class="btn-ghost"
                 id="btn-fullscreen"

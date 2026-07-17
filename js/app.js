@@ -267,8 +267,23 @@ var searchQuery = '';
 
 function onSearchChange() {
   var inp = document.getElementById('inp-search');
+  var clearBtn = document.getElementById('search-clear-btn');
   if (inp) {
     searchQuery = inp.value.trim().toLowerCase();
+    if (clearBtn) {
+      clearBtn.style.display = searchQuery ? 'inline-block' : 'none';
+    }
+    render();
+  }
+}
+
+function clearSearch() {
+  var inp = document.getElementById('inp-search');
+  var clearBtn = document.getElementById('search-clear-btn');
+  if (inp) {
+    inp.value = '';
+    searchQuery = '';
+    if (clearBtn) clearBtn.style.display = 'none';
     render();
   }
 }

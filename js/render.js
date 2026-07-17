@@ -64,14 +64,14 @@ function render() {
   /* ---- Search Input Visibility ---- */
   var searchInp = document.getElementById('inp-search');
   if (searchInp) {
-    searchInp.style.display = fullscreen ? 'inline-block' : 'none';
+    searchInp.style.display = 'inline-block';
   }
 
   /* ---- Entries table ---- */
   var cont = document.getElementById('entries-container');
 
   var filteredEntries = entries;
-  if (fullscreen && searchQuery) {
+  if (searchQuery) {
     filteredEntries = entries.filter(function(e) {
       return e.n.toString().includes(searchQuery) || e.type.toLowerCase().includes(searchQuery);
     });
