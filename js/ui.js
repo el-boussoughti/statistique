@@ -532,6 +532,134 @@ function undoDelete() {
 }
 
 /* =====================================================
+   QUICK-BUTTON CONTEXT MENU
+   Right-click a quick button → pick a price
+   ===================================================== */
+var qmData = { type: null, def: 0 };
+
+function closeQuickMenu() {
+  var m = document.getElementById('quick-menu');
+  if (m) m.classList.remove('open');
+}
+
+function buildQuickMenuItem(label, price) {
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'quick-menu-item';
+  b.setAttribute('role', 'menuitem');
+  var l = document.createElement('span');
+  l.textContent = label;
+  var p = document.createElement('b');
+  p.textContent = price + ' dh';
+  b.appendChild(l);
+  b.appendChild(p);
+  b.addEventListener('click', function() {
+    closeQuickMenu();
+    addQuickEntry(qmData.type, price);
+  });
+  return b;
+}
+
+function buildQuickMenu() {
+  var m = document.getElementById('quick-menu');
+  m.innerHTML = '';
+
+  var t = document.createElement('div');
+  t.className = 'quick-menu-title';
+  t.textContent = qmData.type + ' — prix par défaut ' + qmData.def + ' dh';
+  m.appendChild(t);
+
+  m.appendChild(buildQuickMenuItem('Défaut', qmData.def));
+  m.appendChild(buildQuickMenuItem('Prix x2', qmData.def * 2));
+  m.appendChild(buildQuickMenuItem('Prix x3', qmData.def * 3));
+
+  var customs = (customPrices[qmData.type] || []).slice().sort(function(a, b) { return a - b; });
+  if (customs.length > 0) {
+    var sep = document.createElement('div');
+    sep.className = 'quick-menu-sep';
+    sep.textContent = 'Mes prix';
+    m.appendChild(sep);
+    customs.forEach(function(p) {
+      m.appendChild(buildQuickMenuItem(
+        p + ' dh',
+        p
+      ));
+    });
+  }
+
+  var addRow = document.createElement('div');
+  addRow.className = 'quick-menu-add';
+  var inp = document.createElement('input');
+  inp.type = 'number';
+  inp.min = '0';
+  inp.step = 'any';
+  inp.placeholder = 'Nouveau prix…';
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'quick-menu-add-btn';
+  btn.title = 'Ajouter ce prix';
+  btn.textContent = '+';
+  addRow.appendChild(inp);
+  addRow.appendChild(btn);
+  m.appendChild(addRow);
+
+  function addCustom() {
+    var v = parseFloat(inp.value.replace(',', '.'));
+    if (!isFinite(v) || v <= 0) return;
+    var arr = customPrices[qmData.type] || [];
+    if (arr.indexOf(v) === -1) arr.push(v);
+    customPrices[qmData.type] = arr;
+    saveCustomPrices();
+    buildQuickMenu();
+  }
+
+  btn.addEventListener('click', addCustom);
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeQuickMenu(); return; }
+    if (e.key === 'Enter') { e.preventDefault(); addCustom(); }
+  });
+  inp.focus();
+}
+
+function openQuickMenu(type, def, x, y) {
+  qmData.type = type;
+  qmData.def  = def;
+  buildQuickMenu();
+  var m = document.getElementById('quick-menu');
+  m.classList.add('open');
+  var r = m.getBoundingClientRect();
+  var px = Math.min(x, window.innerWidth  - r.width  - 8);
+  var py = Math.min(y, window.innerHeight - r.height - 8);
+  m.style.left = Math.max(8, px) + 'px';
+  m.style.top  = Math.max(8, py) + 'px';
+}
+
+document.addEventListener('contextmenu', function(e) {
+  var btn = e.target.closest ? e.target.closest('.quick-btn') : null;
+  if (!btn) return;
+  e.preventDefault();
+  openQuickMenu(
+    btn.getAttribute('data-type'),
+    parseFloat(btn.getAttribute('data-montant')),
+    e.clientX,
+    e.clientY
+  );
+});
+
+document.addEventListener('click', function(e) {
+  var m = document.getElementById('quick-menu');
+  if (m && m.classList.contains('open') && !m.contains(e.target)) {
+    closeQuickMenu();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeQuickMenu();
+});
+
+window.addEventListener('scroll', closeQuickMenu, true);
+
+/* =====================================================
    INITIALISATION
    ===================================================== */
 (function init() {

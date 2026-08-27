@@ -25,6 +25,16 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
+    <!-- Screen incompatibility overlay -->
+    <div class="screen-warning" role="alert">
+      <div class="screen-warning-box">
+        <i class="ti ti-device-desktop-off" aria-hidden="true"></i>
+        <h1>Écran incompatible</h1>
+        <p>Votre écran n'est pas compatible avec cette application.</p>
+        <p class="screen-warning-hint">Largeur minimale requise : 1122 px · Hauteur minimale : 820 px.</p>
+      </div>
+    </div>
+
     <div class="app-layout">
       <!-- ================================================
        TOPBAR
@@ -213,49 +223,37 @@
 
           <!-- Quick-add buttons -->
           <div class="quick-types" role="group" aria-label="Ajout rapide">
-            <button
-              class="quick-btn"
-              data-type="C1"
-              data-montant="40"
-              onclick="quickAdd(this)"
-            >
-              C1 <span>40 dh</span>
-            </button>
-            <button
-              class="quick-btn"
-              data-type="C2"
-              data-montant="60"
-              onclick="quickAdd(this)"
-            >
-              C2 <span>60 dh</span>
-            </button>
-            <button
-              class="quick-btn"
-              data-type="ACC"
-              data-montant="80"
-              onclick="quickAdd(this)"
-            >
-              ACC <span>80 dh</span>
-            </button>
-            <button
-              class="quick-btn"
-              data-type="CML"
-              data-montant="100"
-              onclick="quickAdd(this)"
-            >
-              CML <span>100 dh</span>
-            </button>
-            <button
-              class="quick-btn"
-              data-type="CMD"
-              data-montant="40"
-              onclick="quickAdd(this)"
-            >
-              CMD <span>40 dh</span>
-            </button>
+            <div class="quick-row">
+              <button class="quick-btn" data-type="C1" data-montant="40" onclick="quickAdd(this)">C1 <span>40 dh</span></button>
+              <button class="quick-btn" data-type="C2" data-montant="60" onclick="quickAdd(this)">C2 <span>60 dh</span></button>
+              <button class="quick-btn" data-type="ACC" data-montant="80" onclick="quickAdd(this)">ACC <span>80 dh</span></button>
+              <button class="quick-btn" data-type="CML" data-montant="100" onclick="quickAdd(this)">CML <span>100 dh</span></button>
+              <button class="quick-btn" data-type="CMD" data-montant="40" onclick="quickAdd(this)">CMD <span>40 dh</span></button>
+            </div>
+            <div class="quick-row">
+              <button class="quick-btn" data-type="RX" data-montant="120" onclick="quickAdd(this)">RX <span>120 dh</span></button>
+              <button class="quick-btn" data-type="RX" data-montant="112.5" onclick="quickAdd(this)">RX <span>112,5 dh</span></button>
+              <button class="quick-btn" data-type="RX" data-montant="75" onclick="quickAdd(this)">RX <span>75 dh</span></button>
+              <button class="quick-btn" data-type="RX" data-montant="30" onclick="quickAdd(this)">RX <span>30 dh</span></button>
+              <button class="quick-btn" data-type="RX" data-montant="90" onclick="quickAdd(this)">RX <span>90 dh</span></button>
+            </div>
+            <div class="quick-row">
+              <button class="quick-btn" data-type="LABO" data-montant="135" onclick="quickAdd(this)">LABO <span>135 dh</span></button>
+              <button class="quick-btn" data-type="LABO" data-montant="60" onclick="quickAdd(this)">LABO <span>60 dh</span></button>
+              <button class="quick-btn" data-type="LABO" data-montant="75" onclick="quickAdd(this)">LABO <span>75 dh</span></button>
+              <button class="quick-btn" data-type="LABO" data-montant="45" onclick="quickAdd(this)">LABO <span>45 dh</span></button>
+              <button class="quick-btn" data-type="LABO" data-montant="180" onclick="quickAdd(this)">LABO <span>180 dh</span></button>
+            </div>
+            <div class="quick-row">
+              <button class="quick-btn" data-type="EXP" data-montant="50" onclick="quickAdd(this)">EXP <span>50 dh</span></button>
+              <button class="quick-btn" data-type="EXP" data-montant="700" onclick="quickAdd(this)">EXP <span>700 dh</span></button>
+              <button class="quick-btn" data-type="EXP" data-montant="2000" onclick="quickAdd(this)">EXP <span>2000 dh</span></button>
+              <button class="quick-btn" data-type="HOSP" data-montant="400" onclick="quickAdd(this)">HOSP <span>400 dh</span></button>
+              <button class="quick-btn" data-type="HOSP" data-montant="150" onclick="quickAdd(this)">HOSP <span>150 dh</span></button>
+            </div>
           </div>
 
-          <!-- Charts area (hidden until data exists) -->
+          <!-- Charts area (only shown in fullscreen) -->
           <div
             id="charts-area"
             class="charts-area"
@@ -295,6 +293,17 @@
               ></canvas>
             </div>
           </div>
+        <!-- Graphics button (opens charts in fullscreen) -->
+          <button
+            class="graphics-open-btn"
+            id="btn-graphics-open"
+            onclick="toggleGraphicsFullscreen()"
+            style="display: none"
+            aria-label="Ouvrir les graphiques en plein écran"
+          >
+            <i class="ti ti-chart-bar" aria-hidden="true"></i>
+            Voir les graphiques
+          </button>
         </section>
 
         <!-- ---- Column 2 : Entries list ---- -->
@@ -736,6 +745,11 @@
      TOAST CONTAINER
      ================================================ -->
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- ================================================
+     QUICK-BUTTON CONTEXT MENU
+     ================================================ -->
+    <div id="quick-menu" class="quick-menu" role="menu" aria-label="Prix de la quittance"></div>
 
     <!-- ================================================
      SCRIPTS — order matters: app → render → ui

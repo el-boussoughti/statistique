@@ -26,6 +26,12 @@ function render() {
       : '<i class="ti ti-arrows-maximize"></i> Plein écran';
   }
 
+  /* Graphics open button */
+  var goBtn = document.getElementById('btn-graphics-open');
+  if (goBtn) {
+    goBtn.style.display = (totalEntries > 0 && !graphicsFullscreen) ? 'flex' : 'none';
+  }
+
   /* Graphics fullscreen button */
   var gfsBtn = document.getElementById('btn-graphics-fullscreen');
   if (gfsBtn) {
@@ -310,7 +316,8 @@ function drawCharts() {
     gfsBtn.style.display = 'none';
     return;
   }
-  area.style.display   = 'flex';
+  /* Charts only render inside the fullscreen overlay; CSS forces flex via !important */
+  area.style.display   = 'none';
   gfsBtn.style.display = 'inline-flex';
 
   var c1 = document.getElementById('chart-bar');

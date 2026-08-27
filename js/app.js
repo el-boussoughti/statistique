@@ -92,6 +92,27 @@ function saveState() {
 
 function saveSidebar() { saveState(); }
 
+/* ---- Custom quick prices (per type) ---- */
+var QUICK_PRICES_KEY = 'quittance_custom_prices';
+var customPrices = {};
+
+function loadCustomPrices() {
+  try {
+    var raw = localStorage.getItem(QUICK_PRICES_KEY);
+    customPrices = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    customPrices = {};
+  }
+}
+
+function saveCustomPrices() {
+  try {
+    localStorage.setItem(QUICK_PRICES_KEY, JSON.stringify(customPrices));
+  } catch (e) { /* ignore */ }
+}
+
+loadCustomPrices();
+
 /* ---- Helpers ---- */
 function setToday() {
   var d   = new Date();
@@ -331,7 +352,7 @@ function annulerEntry(i) {
   );
 }
 
-function quickAdd(btn) {
+function addQuickEntry(type, montant) {
   var manualN = parseInt(document.getElementById('inp-n').value);
   if (!manualN || manualN < 1) {
     showModal('Entrez d\'abord un numéro de quittance manuellement.');
@@ -340,11 +361,9 @@ function quickAdd(btn) {
   if (nextN === null) {
     nextN = manualN;
   }
-  
-  var type    = btn.getAttribute('data-type');
-  var montant = parseFloat(btn.getAttribute('data-montant'));
-  var n       = manualN;
-  
+
+  var n = manualN;
+
   var isDup = false;
   for (var k = 0; k < entries.length; k++) {
     if (entries[k].n === n) { isDup = true; break; }
@@ -361,6 +380,12 @@ function quickAdd(btn) {
   updateNField();
   saveState();
   render();
+}
+
+function quickAdd(btn) {
+  var type    = btn.getAttribute('data-type');
+  var montant = parseFloat(btn.getAttribute('data-montant'));
+  addQuickEntry(type, montant);
 }
 
 function resetN() {
