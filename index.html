@@ -632,32 +632,56 @@
       aria-modal="true"
       aria-labelledby="about-modal-title"
     >
-      <div class="modal-box clear-modal-box" style="max-width: 500px;">
-        <div class="modal-icon" aria-hidden="true" style="background: rgba(124, 58, 237, 0.12); color: #7c3aed;">
-          <i class="ti ti-info-circle"></i>
+      <div class="modal-box clear-modal-box about-modal-box" style="max-width: 600px;">
+        <div class="about-head">
+          <div class="modal-icon" aria-hidden="true" style="background: rgba(124, 58, 237, 0.12); color: #7c3aed; margin: 0;">
+            <i class="ti ti-info-circle"></i>
+          </div>
+          <div class="about-head-text">
+            <div class="clear-modal-title" id="about-modal-title">À propos de l'application</div>
+            <p class="clear-modal-sub">Gestion des quittances — v2.1</p>
+          </div>
         </div>
-        <div class="clear-modal-title" id="about-modal-title">À propos de l'application</div>
-        
-        <div style="font-size: 14px; color: var(--text-2); margin-top: 16px; line-height: 1.6;">
-          <p style="margin-bottom: 16px;">
+
+        <div class="about-scroll" style="font-size: 14px; color: var(--text-2); line-height: 1.6;">
+          <p class="about-desc">
             Cette application a été créée par <strong>Mohamed El Boussoughti</strong> pour aider ses amis à la caisse à faire les statistiques plus facilement.
           </p>
-          
-          <h4 style="color: var(--text-1); font-weight: 600; margin-bottom: 8px;">Guide d'utilisation</h4>
-          <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 16px;">
-            <li><strong>Auto-incrémentation :</strong> Le numéro de quittance s'incrémente automatiquement et se resynchronise si vous insérez une ancienne quittance.</li>
-            <li><strong>Avertissements :</strong> L'application vous avertit en cas de trou (quittance manquante) dans votre séquence.</li>
-            <li><strong>Mode sombre :</strong> Utilisez le bouton lune/soleil en haut pour changer le thème.</li>
-          </ul>
 
-          <h4 style="color: var(--text-1); font-weight: 600; margin-bottom: 8px;">Raccourcis Clavier</h4>
-          <ul style="list-style-type: disc; padding-left: 20px; margin-bottom: 16px;">
-            <li><strong>Ctrl + Alt + [1 à 5]</strong> : Ajouter rapidement (1=C1, 2=C2, 3=ACC, 4=CML, 5=CMD)</li>
-            <li><strong>Ctrl + Alt + [R, L, H, A, E]</strong> : Définir le type (RX, LABO, HOSP, ANNUL, EXP)</li>
-            <li><strong>Ctrl + /</strong> : Effacer la saisie et se concentrer sur le champ Type</li>
-            <li><strong>Ctrl + Alt + 0</strong> : Effacer la saisie et retirer le focus</li>
-            <li><strong>Entrée</strong> : Enregistrer (depuis le champ Montant)</li>
-          </ul>
+          <a
+            class="about-social"
+            href="https://www.instagram.com/el_boussoughti"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="ti ti-brand-instagram" aria-hidden="true"></i>
+            @el_boussoughti
+          </a>
+
+          <div class="about-section">
+            <h4><i class="ti ti-book" aria-hidden="true"></i> Guide d'utilisation</h4>
+            <ul>
+              <li><strong>Auto-incrémentation :</strong> Le numéro de quittance s'incrémente automatiquement et se resynchronise si vous insérez une ancienne quittance.</li>
+              <li><strong>Avertissements :</strong> L'application vous avertit en cas de trou (quittance manquante) dans votre séquence.</li>
+              <li><strong>Boutons rapides :</strong> Clic gauche pour ajouter au prix par défaut, clic droit pour choisir un prix (défaut, x2, x3 ou un prix personnalisé).</li>
+              <li><strong>Annulation :</strong> Utilisez l'icône d'annulation pour passer une quittance en « ANNUL » en gardant son montant.</li>
+              <li><strong>Graphiques :</strong> Ouvrez les graphiques plein écran avec le bouton « Voir les graphiques » en bas du formulaire.</li>
+              <li><strong>Export Excel :</strong> Le bouton d'export génère le fichier à partir de votre modèle officiel (statistique.xlsx).</li>
+              <li><strong>Mode sombre :</strong> Utilisez le bouton lune/soleil en haut pour changer le thème.</li>
+              <li><strong>Taille d'écran :</strong> L'application nécessite un écran d'au moins 1122&times;820 px.</li>
+            </ul>
+          </div>
+
+          <div class="about-section">
+            <h4><i class="ti ti-keyboard" aria-hidden="true"></i> Raccourcis Clavier</h4>
+            <ul>
+              <li><strong>Ctrl + Alt + [1 à 5]</strong> : Ajouter rapidement (1=C1, 2=C2, 3=ACC, 4=CML, 5=CMD)</li>
+              <li><strong>Ctrl + Alt + [R, L, H, A, E]</strong> : Définir le type (RX, LABO, HOSP, ANNUL, EXP)</li>
+              <li><strong>Ctrl + /</strong> : Effacer la saisie et se concentrer sur le champ Type</li>
+              <li><strong>Ctrl + Alt + 0</strong> : Effacer la saisie et retirer le focus</li>
+              <li><strong>Entrée</strong> : Enregistrer (depuis le champ Montant)</li>
+            </ul>
+          </div>
         </div>
 
         <div class="modal-actions clear-modal-actions" style="margin-top: 24px; justify-content: flex-end;">
