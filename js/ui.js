@@ -45,15 +45,39 @@ function openClearSessionModal() {
   document.getElementById('cm-quitt-au').value  = document.getElementById('inp-quitt-au').value;
   /* Always reset date to today */
   document.getElementById('cm-date').value = setToday();
+  /* Always start with an empty product key */
+  var cmKey = document.getElementById('cm-key');
+  cmKey.value = '';
 
   overlay.classList.add('open');
   /* Focus first input */
   setTimeout(function() { document.getElementById('cm-operator').focus(); }, 50);
 }
 
+/* Product key → auto-fill operator */
+document.getElementById('cm-key').addEventListener('input', function() {
+  var idx = findSecretKey(this.value.trim());
+  if (idx >= 0) {
+    document.getElementById('cm-operator').value = secretKeys[idx].operator;
+  }
+});
+
+document.getElementById('cm-key-eye').addEventListener('click', function() {
+  var inp = document.getElementById('cm-key');
+  var ic  = this.querySelector('i');
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  ic.className = show ? 'ti ti-eye-off' : 'ti ti-eye';
+  inp.focus();
+});
+
 document.getElementById('clear-modal-confirm').addEventListener('click', function() {
   var overlay = document.getElementById('clear-modal-overlay');
   overlay.classList.remove('open');
+
+  /* Product key handling */
+  var kIdx   = findSecretKey(document.getElementById('cm-key').value.trim());
+  var keyDef = kIdx >= 0 ? secretKeys[kIdx] : null;
 
   /* Write new info values back to sidebar inputs */
   document.getElementById('inp-operator').value  = document.getElementById('cm-operator').value;
@@ -63,6 +87,9 @@ document.getElementById('clear-modal-confirm').addEventListener('click', functio
   document.getElementById('inp-quitt-du').value  = document.getElementById('cm-quitt-du').value;
   document.getElementById('inp-quitt-au').value  = document.getElementById('cm-quitt-au').value;
 
+  /* Apply key theme + state, or default unlocked state */
+  applyKeyState(kIdx);
+
   /* Clear all entries */
   entries = [];
   nextN   = null;
@@ -70,6 +97,9 @@ document.getElementById('clear-modal-confirm').addEventListener('click', functio
   saveState();
   updateNField();
   render();
+
+  /* Enjoy the show ✨ */
+  if (keyDef) showKeyAnimation(keyDef.anim, keyDef.msg);
 });
 
 document.getElementById('clear-modal-cancel').addEventListener('click', function() {
@@ -450,6 +480,47 @@ function initTheme() {
   updateThemeIcon();
 }
 
+/* ---- Right-click on the theme button: hide/restore the key theme ---- */
+var keyThemeHidden = false;
+var infoToastTimer = null;
+
+function showToastMessage(txt) {
+  var container = document.getElementById('toast-container');
+  if (!container) return;
+  container.innerHTML = '';
+  clearTimeout(infoToastTimer);
+  var div = document.createElement('div');
+  div.className = 'toast';
+  div.innerHTML = '<div class="toast-message">' + txt + '</div>';
+  container.appendChild(div);
+  infoToastTimer = setTimeout(function() {
+    if (div.parentNode) div.parentNode.removeChild(div);
+  }, 2200);
+}
+
+function toggleKeyThemePreview() {
+  var root = document.documentElement;
+  if (curKeyIdx < 0) {
+    root.removeAttribute('data-keytheme');
+    keyThemeHidden = false;
+    showToastMessage('Aucun thème de clé actif');
+    return;
+  }
+  keyThemeHidden = !keyThemeHidden;
+  if (keyThemeHidden) {
+    root.removeAttribute('data-keytheme');
+    showToastMessage('Thème ramené au défaut');
+  } else {
+    root.setAttribute('data-keytheme', secretKeys[curKeyIdx].theme);
+    showToastMessage('Thème appliqué à nouveau');
+  }
+}
+
+document.getElementById('theme-toggle-btn').addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+  toggleKeyThemePreview();
+});
+
 /* =====================================================
    ABOUT MODAL
    ===================================================== */
@@ -635,6 +706,7 @@ function openQuickMenu(type, def, x, y) {
 }
 
 document.addEventListener('contextmenu', function(e) {
+  if (document.body && document.body.classList.contains('no-key')) return;
   var btn = e.target.closest ? e.target.closest('.quick-btn') : null;
   if (!btn) return;
   e.preventDefault();
@@ -660,11 +732,167 @@ document.addEventListener('keydown', function(e) {
 window.addEventListener('scroll', closeQuickMenu, true);
 
 /* =====================================================
+   KEY ANIMATIONS + SOUNDS
+   ===================================================== */
+var animTimer = null;
+
+function ensureAudio() {
+  var Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!window.__keyAudio) window.__keyAudio = new Ctx();
+  if (window.__keyAudio.state === 'suspended') window.__keyAudio.resume();
+  return window.__keyAudio;
+}
+
+function scheduleNotes(freqs, type, spacing, vol, detuneAmt, dur) {
+  var ctx = ensureAudio();
+  if (!ctx) return;
+  var t = ctx.currentTime;
+  freqs.forEach(function(f, i) {
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = f;
+    if (detuneAmt) o.detune.value = i % 2 ? detuneAmt : -detuneAmt;
+    var t0 = t + i * spacing;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + (dur || 0.45));
+    o.connect(g).connect(ctx.destination);
+    o.start(t0);
+    o.stop(t0 + (dur || 0.45) + 0.05);
+  });
+}
+
+/* Simple snake hiss: soft noise bursts, "sss… sss…" */
+function playSnakeSound() {
+  var ctx = ensureAudio();
+  if (!ctx) return;
+
+  var sr  = ctx.sampleRate;
+  var buf = ctx.createBuffer(1, sr * 2, sr);
+  var d   = buf.getChannelData(0);
+  for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+
+  var t = ctx.currentTime;
+
+  var s = ctx.createBufferSource();
+  s.buffer = buf;
+  s.loop   = true;
+
+  var bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 3000;
+  bp.Q.value = 0.9;
+
+  var g = ctx.createGain();
+  g.gain.value = 0.0001;
+
+  s.connect(bp).connect(g).connect(ctx.destination);
+  s.start(t);
+
+  [[0, 1.1], [1.3, 0.9]].forEach(function(p) {
+    var st = t + p[0], e = st + p[1];
+    g.gain.setValueAtTime(0.0001, st);
+    g.gain.exponentialRampToValueAtTime(0.3, st + 0.12);
+    g.gain.setValueAtTime(0.3, e - 0.12);
+    g.gain.exponentialRampToValueAtTime(0.0001, e);
+  });
+
+  g.gain.setValueAtTime(0.0001, t + 2.4);
+  s.stop(t + 2.5);
+}
+
+function playKeySound(anim) {
+  try {
+    switch (anim) {
+      case 'snake':     playSnakeSound(); break;
+      case 'love':      scheduleNotes([523.25, 659.25, 783.99, 1046.5, 783.99, 659.25], 'triangle', 0.16, 0.18, 0, 0.45); break;
+      case 'wolf':      scheduleNotes([110, 98, 87, 73, 65], 'sawtooth', 0.22, 0.2, 12, 0.3); break;
+      case 'fire':      scheduleNotes([392, 440, 523.25, 587.33, 880, 659.25], 'square', 0.1, 0.11, 0, 0.12); break;
+      case 'cyber':     scheduleNotes([440, 554.37, 659.25, 880, 1108.73, 1318.5], 'square', 0.09, 0.12, 0, 0.15); break;
+      case 'unicorn':   scheduleNotes([1318.5, 1567.98, 2093, 1567.98, 2637], 'sine', 0.12, 0.16, 0, 0.5); break;
+      case 'sunflower': scheduleNotes([784, 987.77, 1174.66, 1567.98, 1318.5], 'triangle', 0.14, 0.16, 0, 0.4); break;
+      case 'bunny':     scheduleNotes([659.25, 783.99, 987.77, 1318.5, 1046.5], 'sine', 0.1, 0.16, 0, 0.22); break;
+      default:          scheduleNotes([523.25, 659.25, 783.99, 1046.5], 'triangle', 0.16, 0.18, 0, 0.45); break;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+/* ---- Sticker + floaters for each animation ---- */
+var ANIM_FX = {
+  snake:     { sticker: '🐍', floats: ['🐍', '🐍', '🌿', '🐍', '🦎', '🐛'] },
+  love:      { sticker: '💖', floats: ['💖', '💕', '🌹', '🌸', '💗', '✨'] },
+  wolf:      { sticker: '🐺', floats: ['🐺', '🐺', '🌙', '🐾', '⚔️', '🏔️'] },
+  fire:      { sticker: '🔥', floats: ['🔥', '🐉', '🌋', '⚡', '🛡️', '🔺'] },
+  cyber:     { sticker: '🤖', floats: ['🤖', '⚡', '🛸', '💾', '🔷', '◼️'] },
+  unicorn:   { sticker: '🦄', floats: ['🦄', '✨', '🌈', '🪄', '🍬', '☁️'] },
+  sunflower: { sticker: '🌻', floats: ['🌻', '🌼', '🐝', '☀️', '🍯', '🧡'] },
+  bunny:     { sticker: '🐰', floats: ['🐰', '🍓', '🎀', '🩰', '🍭', '💗'] },
+};
+
+function showKeyAnimation(anim, msg) {
+  var overlay = document.getElementById('key-anim-overlay');
+  var stage   = document.getElementById('key-anim-stage');
+  var msgEl   = document.getElementById('key-anim-msg');
+
+  clearTimeout(animTimer);
+  stage.innerHTML = '';
+  overlay.className = 'key-anim-overlay';
+  overlay.classList.add(anim);
+  msgEl.textContent = msg;
+
+  var fx = ANIM_FX[anim] || ANIM_FX.love;
+
+  /* Big central sticker */
+  var sticker = document.createElement('div');
+  sticker.className = 'key-sticker';
+  sticker.textContent = fx.sticker;
+  stage.appendChild(sticker);
+
+  /* Ambient floats around the sticker */
+  spawnFloaters(stage, fx.floats);
+
+  playKeySound(anim);
+  overlay.classList.add('visible');
+
+  animTimer = setTimeout(function() {
+    overlay.classList.remove('visible');
+    setTimeout(function() {
+      stage.innerHTML = '';
+      overlay.className = 'key-anim-overlay';
+    }, 450);
+  }, 5200);
+}
+
+/* ---- Floating emojis around the sticker ---- */
+function spawnFloaters(stage, emojis) {
+  var n = 22;
+  for (var i = 0; i < n; i++) {
+    var s = document.createElement('span');
+    s.className = 'float-item';
+    s.textContent = emojis[i % emojis.length];
+    var size = 16 + Math.random() * 26;
+    s.style.left = (Math.random() * 100) + 'vw';
+    s.style.fontSize = size + 'px';
+    s.style.animationDuration = (3.4 + Math.random() * 2.6) + 's';
+    s.style.animationDelay = (Math.random() * 1.8) + 's';
+    s.style.setProperty('--sway', (Math.random() * 80 - 40) + 'px');
+    stage.appendChild(s);
+  }
+}
+
+/* =====================================================
    INITIALISATION
    ===================================================== */
 (function init() {
   initTheme();
   loadState();
+
+  /* Restore last used product key state (theme + locked mode) */
+  var storedKey = null;
+  try { storedKey = localStorage.getItem(KEY_STORAGE); } catch (e) {}
+  applyKeyState(storedKey ? findSecretKey(storedKey) : -1);
 
   /* Set today if date is empty */
   var dateInp = document.getElementById('inp-date');

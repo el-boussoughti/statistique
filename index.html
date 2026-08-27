@@ -230,21 +230,21 @@
               <button class="quick-btn" data-type="CML" data-montant="100" onclick="quickAdd(this)">CML <span>100 dh</span></button>
               <button class="quick-btn" data-type="CMD" data-montant="40" onclick="quickAdd(this)">CMD <span>40 dh</span></button>
             </div>
-            <div class="quick-row">
+            <div class="quick-row locked-extra">
               <button class="quick-btn" data-type="RX" data-montant="120" onclick="quickAdd(this)">RX <span>120 dh</span></button>
               <button class="quick-btn" data-type="RX" data-montant="112.5" onclick="quickAdd(this)">RX <span>112,5 dh</span></button>
               <button class="quick-btn" data-type="RX" data-montant="75" onclick="quickAdd(this)">RX <span>75 dh</span></button>
               <button class="quick-btn" data-type="RX" data-montant="30" onclick="quickAdd(this)">RX <span>30 dh</span></button>
               <button class="quick-btn" data-type="RX" data-montant="90" onclick="quickAdd(this)">RX <span>90 dh</span></button>
             </div>
-            <div class="quick-row">
+            <div class="quick-row locked-extra">
               <button class="quick-btn" data-type="LABO" data-montant="135" onclick="quickAdd(this)">LABO <span>135 dh</span></button>
               <button class="quick-btn" data-type="LABO" data-montant="60" onclick="quickAdd(this)">LABO <span>60 dh</span></button>
               <button class="quick-btn" data-type="LABO" data-montant="75" onclick="quickAdd(this)">LABO <span>75 dh</span></button>
               <button class="quick-btn" data-type="LABO" data-montant="45" onclick="quickAdd(this)">LABO <span>45 dh</span></button>
               <button class="quick-btn" data-type="LABO" data-montant="180" onclick="quickAdd(this)">LABO <span>180 dh</span></button>
             </div>
-            <div class="quick-row">
+            <div class="quick-row locked-extra">
               <button class="quick-btn" data-type="EXP" data-montant="50" onclick="quickAdd(this)">EXP <span>50 dh</span></button>
               <button class="quick-btn" data-type="EXP" data-montant="700" onclick="quickAdd(this)">EXP <span>700 dh</span></button>
               <button class="quick-btn" data-type="EXP" data-montant="2000" onclick="quickAdd(this)">EXP <span>2000 dh</span></button>
@@ -535,6 +535,17 @@
 
         <div class="clear-modal-form">
           <div class="field">
+            <label for="cm-key">Clé produit <span class="field-optional">optionnel</span></label>
+            <div class="key-input-wrap">
+              <i class="ti ti-key key-input-icon" aria-hidden="true"></i>
+              <input type="password" id="cm-key" class="key-input" placeholder="Entrez votre clé secrète…" autocomplete="off" />
+              <button type="button" class="key-input-eye" id="cm-key-eye" title="Afficher / masquer la clé" tabindex="-1">
+                <i class="ti ti-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <p class="field-hint">Laisser vide pour rester en mode standard.</p>
+          </div>
+          <div class="field">
             <label for="cm-operator">Opérateur</label>
             <input type="text" id="cm-operator" placeholder="Nom de l'opérateur" autocomplete="off" />
           </div>
@@ -774,6 +785,14 @@
      QUICK-BUTTON CONTEXT MENU
      ================================================ -->
     <div id="quick-menu" class="quick-menu" role="menu" aria-label="Prix de la quittance"></div>
+
+    <!-- ================================================
+     KEY ANIMATION OVERLAY
+     ================================================ -->
+    <div id="key-anim-overlay" class="key-anim-overlay" aria-hidden="true">
+      <div class="key-anim-stage" id="key-anim-stage"></div>
+      <div class="key-anim-msg" id="key-anim-msg"></div>
+    </div>
 
     <!-- ================================================
      SCRIPTS — order matters: app → render → ui

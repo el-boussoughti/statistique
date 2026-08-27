@@ -332,8 +332,9 @@ function drawCharts() {
   }
 
   var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var themeAccent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim() || '#7C3AED';
   chartMeta.keys      = keys;
-  chartMeta.colors    = ['#7C3AED', '#EC4899', '#059669', '#D97706', '#0EA5E9', '#EF4444', '#8B5CF6', '#14B8A6'];
+  chartMeta.colors    = [themeAccent, '#EC4899', '#059669', '#D97706', '#0EA5E9', '#EF4444', '#8B5CF6', '#14B8A6'];
   chartMeta.textColor  = isDark ? '#F9FAFB' : '#111827';
   chartMeta.mutedColor = isDark ? '#6B7280' : '#9CA3AF';
 

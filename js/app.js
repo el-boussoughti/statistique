@@ -113,6 +113,102 @@ function saveCustomPrices() {
 
 loadCustomPrices();
 
+/* ---- Product secret keys ----
+   Chaque clé : active un opérateur, un thème et une animation.
+   → Changez "key" par la vraie clé secrète. Ajoutez-en d'autres ici. */
+var KEY_STORAGE    = 'quittance_secret_key';
+var secretKeys     = [
+  {
+    key:      'ld51s',   // <-- clé secrète à personnaliser
+    operator: 'Hamza',
+    theme:    'snake',
+    anim:     'snake',
+    msg:      'Fiiin a lhnach, Marhba bik !',
+  },
+  {
+    key:      'ldhc3',   // <-- clé secrète à personnaliser
+    operator: 'Douae',
+    theme:    'love',
+    anim:     'love',
+    msg:      'Salam Ostada Douae, Marhba bik !',
+  },
+  /* ---- Thèmes Homme ---- */
+  {
+    key:      'rksn2',    // <-- clé secrète à personnaliser
+    operator: 'Riad',
+    theme:    'wolf',
+    anim:     'wolf',
+    msg:      'Bonjour Riad, Marhba bik !',
+  },
+  {
+    key:      'lkd23',    // <-- clé secrète à personnaliser
+    operator: 'Sifeddine',
+    theme:    'fire',
+    anim:     'fire',
+    msg:      'Bonjour Sifeddine, Marhba bik! Tfrej f Breaking Bad.',
+  },
+  {
+    key:      'ldhg5',   // <-- clé secrète à personnaliser
+    operator: 'Rachid',
+    theme:    'cyber',
+    anim:     'cyber',
+    msg:      'Bonjour Rachid. Marhba bik !',
+  },
+  /* ---- Thèmes Fille ---- */
+  {
+    key:      'asls8', // <-- clé secrète à personnaliser
+    operator: 'Asmae',
+    theme:    'unicorn',
+    anim:     'unicorn',
+    msg:      'Bonjour Asmae, Marhba bik !',
+  },
+  {
+    key:      'x-sunflower-2024', // <-- clé secrète à personnaliser
+    operator: 'Sunflower',
+    theme:    'sunflower',
+    anim:     'sunflower',
+    msg:      'Rayonne, Marhba bik !',
+  },
+  {
+    key:      'x-bunny-2024',   // <-- clé secrète à personnaliser
+    operator: 'Bunny',
+    theme:    'bunny',
+    anim:     'bunny',
+    msg:      'Adorable, Marhba bik !',
+  },
+  /* Ajoutez d'autres clés ici :
+  {
+    key:      'ma-cle',
+    operator: 'Nom',
+    theme:    'snake',   // ou 'love'
+    anim:     'snake',   // ou 'love'
+    msg:      'Message de bienvenue',
+  },
+  */
+];
+var curKeyIdx = -1;
+
+function findSecretKey(val) {
+  for (var i = 0; i < secretKeys.length; i++) {
+    if (secretKeys[i].key === val) return i;
+  }
+  return -1;
+}
+
+function applyKeyState(idx) {
+  curKeyIdx = idx;
+  var root = document.documentElement;
+  if (idx >= 0) {
+    root.setAttribute('data-keytheme', secretKeys[idx].theme);
+    document.body.classList.remove('no-key');
+    try { localStorage.setItem(KEY_STORAGE, secretKeys[idx].key); } catch (e) {}
+  } else {
+    root.removeAttribute('data-keytheme');
+    document.body.classList.add('no-key');
+    try { localStorage.removeItem(KEY_STORAGE); } catch (e) {}
+  }
+}
+
 /* ---- Helpers ---- */
 function setToday() {
   var d   = new Date();
