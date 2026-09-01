@@ -16,6 +16,8 @@ function render() {
   /* Fullscreen classes */
   gridEl.classList.toggle('list-fullscreen',     fullscreen);
   gridEl.classList.toggle('graphics-fullscreen', graphicsFullscreen);
+  var isVip = !document.body.classList.contains('no-key');
+  gridEl.classList.toggle('auto-totale-on',      autoTotale.enabled && showAll && isVip);
 
   /* Fullscreen toggle button */
   var fsBtn = document.getElementById('btn-fullscreen');
@@ -92,27 +94,52 @@ function render() {
     var totalPages = Math.ceil(totalView / pageSize);
     if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
 
-    var sorted = sortBy
-      ? filteredEntries.slice().sort(function(a, b) {
-          var va = a[sortBy], vb = b[sortBy];
-          if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb + '').toLowerCase(); }
-          if (va < vb) return sortAsc ? -1 : 1;
-          if (va > vb) return sortAsc ?  1 : -1;
-          return 0;
-        })
-      : filteredEntries;
+    var autoLock   = showAll && isVip && autoTotale.enabled && autoTotale.firstCount >= 1;
+    var sorted = autoLock
+      ? filteredEntries.slice().sort(function(a, b) { return a.n - b.n; })
+      : (sortBy
+          ? filteredEntries.slice().sort(function(a, b) {
+              var va = a[sortBy], vb = b[sortBy];
+              if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb + '').toLowerCase(); }
+              if (va < vb) return sortAsc ? -1 : 1;
+              if (va > vb) return sortAsc ?  1 : -1;
+              return 0;
+            })
+          : filteredEntries);
 
     var startIdx = showAll ? 0 : (currentPage - 1) * pageSize;
     var endIdx   = showAll ? totalView : Math.min(totalView, currentPage * pageSize);
 
     function arrow(col) {
-      if (sortBy !== col) return '';
+      if (autoLock || sortBy !== col) return '';
       return sortAsc
         ? ' <i class="ti ti-chevron-up" style="font-size:10px;"></i>'
         : ' <i class="ti ti-chevron-down" style="font-size:10px;"></i>';
     }
 
     var rows = '';
+    /* Auto totale (VIP): page totals ONLY in fullscreen.
+       Pages follow the PHYSICAL order of the book = quittances sorted ASC
+       (page 1 = firstCount entries, then groups of 5), regardless of the
+       display sort — so descending ("vice versa") never inverts pages. */
+    var atFirst = showAll && isVip && autoTotale.enabled && autoTotale.firstCount >= 1 ? autoTotale.firstCount : 0;
+    var totalRowMap = null;
+    if (atFirst && filteredEntries.length > 0) {
+      var phys = filteredEntries.slice().sort(function(a, b) { return a.n - b.n; });
+      totalRowMap = new Map();
+      var pIdx = 0, pSize = atFirst, pNum = 1, pRunning = 0;
+      while (pIdx < phys.length) {
+        var pEnd = Math.min(phys.length, pIdx + pSize);
+        var pSum = 0;
+        for (var pj = pIdx; pj < pEnd; pj++) {
+          if (phys[pj].type !== 'ANNUL') pSum += phys[pj].montant;
+        }
+        var pPrev = pRunning;
+        pRunning += pSum;
+        totalRowMap.set(phys[pEnd - 1], { pnum: pNum, sum: pRunning, pageSum: pSum, prev: pPrev });
+        pNum++; pIdx = pEnd; pSize = 5;
+      }
+    }
     for (var i = startIdx; i < endIdx; i++) {
       var e       = sorted[i];
       var realIdx = entries.indexOf(e);
@@ -131,14 +158,33 @@ function render() {
             '<button class="action-btn danger" onclick="deleteEntry(' + realIdx + ')" title="Supprimer"><i class="ti ti-trash"></i></button>' +
           '</div></td>' +
         '</tr>';
+
+      /* The LAST physical entry of a page is displayed => append its total */
+      if (totalRowMap && totalRowMap.has(e)) {
+        var t = totalRowMap.get(e);
+        var detail = 'Cette page : <b>' + t.pageSum.toFixed(2) + ' dh</b>';
+        if (t.pnum > 1) {
+          detail += ' &middot; Précédente : <b>' + t.prev.toFixed(2) + ' dh</b> &middot; Total : <b>' + t.sum.toFixed(2) + ' dh</b>';
+        }
+        rows +=
+          '<tr class="page-total-row">' +
+            '<td class="page-total-label">Total page ' + t.pnum + '</td>' +
+            '<td></td>' +
+            '<td class="page-total-value" title="Somme cumulée jusqu\'à la page ' + t.pnum + '">' +
+              t.sum.toFixed(2) + ' dh' +
+              '<span class="page-total-detail">' + detail + '</span>' +
+            '</td>' +
+            '<td></td>' +
+          '</tr>';
+      }
     }
 
     cont.innerHTML =
       '<table class="entries-table">' +
-        '<thead><tr>' +
-          '<th class="sort-header" onclick="sortEntries(\'n\')" ondblclick="resetSort()">N°' + arrow('n') + '</th>' +
-          '<th class="sort-header" onclick="sortEntries(\'type\')" ondblclick="resetSort()">Type' + arrow('type') + '</th>' +
-          '<th class="sort-header" onclick="sortEntries(\'montant\')" ondblclick="resetSort()">Montant' + arrow('montant') + '</th>' +
+        '<thead><tr class="' + (autoLock ? 'sort-locked' : '') + '">' +
+          '<th class="sort-header" title="' + (autoLock ? 'Tri bloqué (Auto totale)' : '') + '" onclick="sortEntries(\'n\')" ondblclick="resetSort()">N°' + arrow('n') + '</th>' +
+          '<th class="sort-header" title="' + (autoLock ? 'Tri bloqué (Auto totale)' : '') + '" onclick="sortEntries(\'type\')" ondblclick="resetSort()">Type' + arrow('type') + '</th>' +
+          '<th class="sort-header" title="' + (autoLock ? 'Tri bloqué (Auto totale)' : '') + '" onclick="sortEntries(\'montant\')" ondblclick="resetSort()">Montant' + arrow('montant') + '</th>' +
           '<th></th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +

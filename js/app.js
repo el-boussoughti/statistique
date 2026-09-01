@@ -60,8 +60,8 @@ function loadState() {
       nextN   = data.nextN !== undefined ? data.nextN : null;
       sortBy  = data.sortBy  !== undefined ? data.sortBy  : null;
       sortAsc = data.sortAsc !== undefined ? data.sortAsc : true;
-      if (data.operator)  document.getElementById('inp-operator').value  = data.operator;
-      if (data.service)   document.getElementById('inp-service').value   = data.service;
+      if (data.operator)  document.getElementById('inp-operator').value  = data.operator.toUpperCase();
+      if (data.service)   document.getElementById('inp-service').value   = data.service.toUpperCase();
       if (data.date)      document.getElementById('inp-date').value      = data.date;
       if (data.registre)  document.getElementById('inp-registre').value  = data.registre;
       if (data.quittDu)   document.getElementById('inp-quitt-du').value  = data.quittDu;
@@ -113,20 +113,55 @@ function saveCustomPrices() {
 
 loadCustomPrices();
 
+/* ---- Page-totale (VIP) : total automatique par page du registre ----
+   Premier pageSize pré-réglable, puis groupes de 5. */
+var AUTO_TOTALE_KEY = 'quittance_auto_totale';
+var autoTotale = { enabled: false, firstCount: 5 };
+
+function loadAutoTotale() {
+  try {
+    var raw = localStorage.getItem(AUTO_TOTALE_KEY);
+    if (raw) {
+      var d = JSON.parse(raw);
+      autoTotale.enabled = !!d.enabled;
+      autoTotale.firstCount =
+        (d.firstCount >= 1 && d.firstCount <= 5) ? d.firstCount : 5;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function saveAutoTotale() {
+  try {
+    localStorage.setItem(AUTO_TOTALE_KEY, JSON.stringify(autoTotale));
+  } catch (e) { /* ignore */ }
+}
+
+loadAutoTotale();
+
 /* ---- Product secret keys ----
-   Chaque clé : active un opérateur, un thème et une animation.
-   → Changez "key" par la vraie clé secrète. Ajoutez-en d'autres ici. */
+   Les clés ne sont PAS stockées en clair : seul un hash SHA-256
+   (de la clé en minuscules) est embarqué. Impossible de retrouver
+   la clé depuis le code source (F12).
+   Pour ajouter une clé :
+     1. choisissez une clé secrète (ex : 'ma-cle')
+     2. calculez son SHA-256 en minuscules, ex dans la console :
+        async h=>crypto.subtle.digest('SHA-256',new TextEncoder().encode(h.trim().toLowerCase()))
+            .then(b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''))
+        puis h('ma-cle')
+     3. copiez le hash ci-dessous + id, operator, theme, anim, msg. */
 var KEY_STORAGE    = 'quittance_secret_key';
 var secretKeys     = [
   {
-    key:      'ld51s',   // <-- clé secrète à personnaliser
+    id:       'hamza',                                         // identifiant interne (stocké en localStorage)
+    hash:     'd9940f9d77ab60f49d3955e43f93026b0d2d2d5dd924d38868464b7862cdb951',
     operator: 'Hamza',
     theme:    'snake',
     anim:     'snake',
     msg:      'Fiiin a lhnach, Marhba bik !',
   },
   {
-    key:      'ldhc3',   // <-- clé secrète à personnaliser
+    id:       'douae',
+    hash:     '4b7cf120a62dd74d6cadfbd7f078a069479b76c017d348a95a54444c29faeee6',
     operator: 'Douae',
     theme:    'love',
     anim:     'love',
@@ -134,21 +169,24 @@ var secretKeys     = [
   },
   /* ---- Thèmes Homme ---- */
   {
-    key:      'rksn2',    // <-- clé secrète à personnaliser
+    id:       'riad',
+    hash:     'd91d3db640487b66f08dd1d82d81b1ec7dc708a8971dbd6e854cddfed81b6b54',
     operator: 'Riad',
     theme:    'wolf',
     anim:     'wolf',
     msg:      'Bonjour Riad, Marhba bik !',
   },
   {
-    key:      'lkd23',    // <-- clé secrète à personnaliser
+    id:       'sifeddine',
+    hash:     '3c7e6480c3bfce90d42d27b6c6c38ce037ab4fd867e1838c1f919013a7e37ecd',
     operator: 'Sifeddine',
     theme:    'fire',
     anim:     'fire',
     msg:      'Bonjour Sifeddine, Marhba bik! Tfrej f Breaking Bad.',
   },
   {
-    key:      'ldhg5',   // <-- clé secrète à personnaliser
+    id:       'rachid',
+    hash:     '2d4adb7cee13dc9df1b1ad9f3a60c495838e09fff4779ababc6ddc58d8314338',
     operator: 'Rachid',
     theme:    'cyber',
     anim:     'cyber',
@@ -156,29 +194,33 @@ var secretKeys     = [
   },
   /* ---- Thèmes Fille ---- */
   {
-    key:      'asls8', // <-- clé secrète à personnaliser
+    id:       'asmae',
+    hash:     '75be56db79ade3165669121ee64d126e6ad0cd0de360e97be6a3f3aabb93017b',
     operator: 'Asmae',
     theme:    'unicorn',
     anim:     'unicorn',
     msg:      'Bonjour Asmae, Marhba bik !',
   },
   {
-    key:      'x-sunflower-2024', // <-- clé secrète à personnaliser
+    id:       'sunflower',
+    hash:     '9e6128b7804868af157c2c8efabe2aaab1651635b535c414682f60bbe60aee96',
     operator: 'Sunflower',
     theme:    'sunflower',
     anim:     'sunflower',
     msg:      'Rayonne, Marhba bik !',
   },
   {
-    key:      'x-bunny-2024',   // <-- clé secrète à personnaliser
+    id:       'bunny',
+    hash:     'e441f9baee99ba89af98883c109515a7344f17aa94f81efb2fb4b017b92f27f6',
     operator: 'Bunny',
     theme:    'bunny',
     anim:     'bunny',
     msg:      'Adorable, Marhba bik !',
   },
-  /* Ajoutez d'autres clés ici :
+  /* Ajoutez d'autres clés ici (hash, pas la clé en clair) :
   {
-    key:      'ma-cle',
+    id:       'mon-id',
+    hash:     '…sha256 hex de la clé en minuscules…',
     operator: 'Nom',
     theme:    'snake',   // ou 'love'
     anim:     'snake',   // ou 'love'
@@ -188,9 +230,34 @@ var secretKeys     = [
 ];
 var curKeyIdx = -1;
 
+function sha256Hex(val) {
+  if (!window.crypto || !window.crypto.subtle) {
+    return Promise.resolve('');
+  }
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(val))
+    .then(function(buf) {
+      return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    });
+}
+
+function normalizeKey(val) {
+  return String(val || '').trim().toLowerCase();
+}
+
+/* Async — retourne l'index de la clé dont le hash correspond (insensible à la casse) */
 function findSecretKey(val) {
+  var norm = normalizeKey(val);
+  return sha256Hex(norm).then(function(hash) {
+    for (var i = 0; i < secretKeys.length; i++) {
+      if (secretKeys[i].hash === hash) return i;
+    }
+    return -1;
+  });
+}
+
+function findKeyById(id) {
   for (var i = 0; i < secretKeys.length; i++) {
-    if (secretKeys[i].key === val) return i;
+    if (secretKeys[i].id === id) return i;
   }
   return -1;
 }
@@ -201,7 +268,7 @@ function applyKeyState(idx) {
   if (idx >= 0) {
     root.setAttribute('data-keytheme', secretKeys[idx].theme);
     document.body.classList.remove('no-key');
-    try { localStorage.setItem(KEY_STORAGE, secretKeys[idx].key); } catch (e) {}
+    try { localStorage.setItem(KEY_STORAGE, secretKeys[idx].id); } catch (e) {}
   } else {
     root.removeAttribute('data-keytheme');
     document.body.classList.add('no-key');
@@ -253,10 +320,31 @@ function updateNField() {
 }
 
 /* ---- CRUD ---- */
+function missingRequiredField() {
+  var fields = [
+    { id: 'inp-operator', label: 'Opérateur' },
+    { id: 'inp-service',  label: 'Service' },
+    { id: 'inp-date',     label: 'Date' },
+    { id: 'inp-registre', label: 'Registre N°' }
+  ];
+  for (var i = 0; i < fields.length; i++) {
+    var el = document.getElementById(fields[i].id);
+    if (!el || !el.value.trim()) return fields[i];
+  }
+  return null;
+}
+
 function addEntry() {
   var type    = document.getElementById('inp-type').value.trim();
   var montant = parseFloat(document.getElementById('inp-montant').value.replace(',', '.'));
   var n       = parseInt(document.getElementById('inp-n').value);
+
+  var miss = missingRequiredField();
+  if (miss) {
+    showModal('Champ obligatoire : ' + miss.label + '.');
+    document.getElementById(miss.id).focus();
+    return;
+  }
 
   if (!type)                          { showModal('Choisissez ou tapez un type.'); return; }
   if (isNaN(montant) || montant <= 0) { showModal('Montant invalide.'); return; }
@@ -450,6 +538,12 @@ function annulerEntry(i) {
 
 function addQuickEntry(type, montant) {
   var manualN = parseInt(document.getElementById('inp-n').value);
+  var miss = missingRequiredField();
+  if (miss) {
+    showModal('Champ obligatoire : ' + miss.label + '.');
+    document.getElementById(miss.id).focus();
+    return;
+  }
   if (!manualN || manualN < 1) {
     showModal('Entrez d\'abord un numéro de quittance manuellement.');
     return;
@@ -497,6 +591,10 @@ function clearAll() {
 
 /* ---- Sorting ---- */
 function sortEntries(col) {
+  if (autoTotale.enabled && fullscreen && !document.body.classList.contains('no-key')) {
+    showToastMessage('Tri bloqué : Auto totale actif (ordre par N°)');
+    return;
+  }
   if (sortBy === col) {
     sortAsc = !sortAsc;
   } else {
@@ -509,6 +607,10 @@ function sortEntries(col) {
 }
 
 function resetSort() {
+  if (autoTotale.enabled && fullscreen && !document.body.classList.contains('no-key')) {
+    showToastMessage('Tri bloqué : Auto totale actif (ordre par N°)');
+    return;
+  }
   sortBy  = null;
   sortAsc = true;
   saveState();
@@ -671,7 +773,10 @@ function shareWhatsApp() {
 }
 
 /* ---- Excel import/export ---- */
-function exportExcel() {
+var EXPORT_PASSWORD = 'CHR2026'; /* mot de passe de protection du fichier exporté */
+
+function exportExcel(protect) {
+  if (protect === undefined) protect = true;
   var op       = document.getElementById('inp-operator').value  || '—';
   var sv       = document.getElementById('inp-service').value   || '—';
   var dt       = document.getElementById('inp-date').value      || '—';
@@ -805,6 +910,17 @@ function exportExcel() {
     /* ── Grand totals row 27 ─────────────────────────────────────── */
     ws.getCell(27, 7).value = totalEntries;
     ws.getCell(27, 8).value = total;
+
+    /* ── Protection (optionnelle) : cellules verrouillées + feuille protégée par mot de passe ── */
+    if (protect) {
+      var lockToRow = Math.max(rev.length + 1, 27) + 2;
+      for (var lr = 1; lr <= lockToRow; lr++) {
+        for (var lc = 1; lc <= 12; lc++) {
+          ws.getCell(lr, lc).protection = { locked: true, hidden: false };
+        }
+      }
+      ws.protect(EXPORT_PASSWORD, { selectLockedCells: false, selectUnlockedCells: false });
+    }
 
     /* ── Download ────────────────────────────────────────────────── */
     var dateStr = dt.replace(/\//g, '-');

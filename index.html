@@ -22,7 +22,7 @@
     <!-- html2canvas (used for WhatsApp image export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- App styles -->
-    <link rel="stylesheet" href="css/style.css?v=20260828" />
+    <link rel="stylesheet" href="css/style.css?v=20260926" />
   </head>
   <body>
     <!-- Screen incompatibility overlay -->
@@ -46,7 +46,12 @@
           </div>
           <div>
             <span class="brand-name">Quittances</span>
-            <span class="brand-sub">Gestion des reçus</span>
+            <span class="brand-sub">
+              Gestion des reçus
+              <span class="topbar-vip" title="Compte VIP — clé produit active">
+                <i class="ti ti-crown" aria-hidden="true"></i> VIP
+              </span>
+            </span>
           </div>
         </div>
         <div class="topbar-actions">
@@ -67,7 +72,8 @@
           </button>
           <button
           class="btn-icon"
-          onclick="checkMissingInfo(exportExcel)"
+          id="btn-export-excel"
+          onclick="checkMissingInfo(function(){ exportExcel(true); })"
           title="Exporter en Excel"
           >
           <i class="ti ti-file-spreadsheet"></i>
@@ -325,6 +331,37 @@
                 />
                 <i class="ti ti-x search-clear" id="search-clear-btn" onclick="clearSearch()" style="display: none;" title="Effacer la recherche"></i>
               </div>
+              <div id="auto-totale-wrap" class="auto-totale-wrap">
+                <button
+                  class="btn-ghost"
+                  id="auto-totale-toggle"
+                  onclick="toggleAutoTotale()"
+                  title="Afficher un total après chaque page du registre (5 quittances)"
+                >
+                  <i class="ti ti-sum" aria-hidden="true"></i> Auto totale
+                </button>
+                <span id="auto-totale-status" class="auto-totale-status"></span>
+                <div id="auto-totale-pop" class="auto-totale-pop">
+                  <div class="auto-totale-pop-title">Total par page du registre</div>
+                  <p class="auto-totale-pop-desc">Combien de quittances restent sur la 1ʳᵉ page&nbsp;?</p>
+                  <div class="auto-totale-opts" id="auto-totale-opts">
+                    <button type="button" class="auto-totale-opt" data-v="1" onclick="selectAutoTotaleOption(1)">1</button>
+                    <button type="button" class="auto-totale-opt" data-v="2" onclick="selectAutoTotaleOption(2)">2</button>
+                    <button type="button" class="auto-totale-opt" data-v="3" onclick="selectAutoTotaleOption(3)">3</button>
+                    <button type="button" class="auto-totale-opt" data-v="4" onclick="selectAutoTotaleOption(4)">4</button>
+                    <button type="button" class="auto-totale-opt" data-v="5" onclick="selectAutoTotaleOption(5)">5</button>
+                  </div>
+                  <p class="auto-totale-preview" id="auto-totale-preview"></p>
+                  <div class="auto-totale-actions">
+                    <button type="button" class="btn-primary auto-totale-apply" id="auto-totale-apply" onclick="applyAutoTotale()">
+                      <i class="ti ti-check" aria-hidden="true"></i> Activer
+                    </button>
+                    <button type="button" class="auto-totale-off" id="auto-totale-off" onclick="disableAutoTotale()">
+                      <i class="ti ti-ban" aria-hidden="true"></i> Désactiver
+                    </button>
+                  </div>
+                </div>
+              </div>
               <button
                 class="btn-ghost"
                 id="btn-fullscreen"
@@ -420,14 +457,17 @@
 
           <!-- Session info -->
           <div class="info-section">
-            <div class="info-header">Informations</div>
+            <div class="info-header" onclick="toggleInfoSection()" title="Afficher / masquer les informations">
+              <span>Informations</span>
+              <i class="ti ti-chevron-up info-chevron" aria-hidden="true"></i>
+            </div>
             <div class="field">
               <label for="inp-operator">Opérateur</label>
               <input
                 type="text"
                 id="inp-operator"
                 placeholder="Nom de l'opérateur"
-                oninput="saveSidebar()"
+                readonly
               />
             </div>
             <div class="field">
@@ -436,7 +476,7 @@
                 type="text"
                 id="inp-service"
                 placeholder="Service"
-                oninput="saveSidebar()"
+                readonly
               />
             </div>
             <div class="field">
@@ -446,7 +486,7 @@
                 id="inp-date"
                 placeholder="jj/mm/aaaa"
                 maxlength="10"
-                oninput="saveSidebar()"
+                readonly
                 aria-label="Date au format jj/mm/aaaa"
               />
             </div>
@@ -456,7 +496,7 @@
                 type="text"
                 id="inp-registre"
                 placeholder="Ex: 699"
-                oninput="saveSidebar()"
+                readonly
                 aria-label="Numéro de registre"
               />
             </div>
@@ -466,7 +506,7 @@
                 type="text"
                 id="inp-quitt-du"
                 placeholder="Ex: 393501"
-                oninput="saveSidebar()"
+                readonly
                 aria-label="Numéro de quittance du"
               />
             </div>
@@ -476,7 +516,7 @@
                 type="text"
                 id="inp-quitt-au"
                 placeholder="Ex: 393602"
-                oninput="saveSidebar()"
+                readonly
                 aria-label="Numéro de quittance au"
               />
             </div>
@@ -591,7 +631,7 @@
       aria-labelledby="info-modal-title"
     >
       <div class="modal-box clear-modal-box">
-        <div class="modal-icon" aria-hidden="true" style="background: rgba(59, 130, 246, 0.12); color: #3b82f6;">
+        <div class="modal-icon" aria-hidden="true">
           <i class="ti ti-info-circle"></i>
         </div>
         <div class="clear-modal-title" id="info-modal-title">Informations manquantes</div>
@@ -600,7 +640,7 @@
         <div class="clear-modal-form">
           <div class="field">
             <label for="im-operator">Opérateur</label>
-            <input type="text" id="im-operator" placeholder="Nom de l'opérateur" autocomplete="off" />
+            <input type="text" id="im-operator" placeholder="Nom de l'opérateur" autocomplete="off" readonly />
           </div>
           <div class="field">
             <label for="im-service">Service</label>
@@ -626,7 +666,7 @@
 
         <div class="modal-actions clear-modal-actions">
           <button class="modal-btn modal-cancel" id="info-modal-cancel">Annuler</button>
-          <button class="modal-btn modal-confirm" id="info-modal-confirm" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);">
+          <button class="modal-btn modal-confirm" id="info-modal-confirm">
             Continuer <i class="ti ti-arrow-right" aria-hidden="true"></i>
           </button>
         </div>
@@ -645,12 +685,12 @@
     >
       <div class="modal-box clear-modal-box about-modal-box" style="max-width: 600px;">
         <div class="about-head">
-          <div class="modal-icon" aria-hidden="true" style="background: rgba(124, 58, 237, 0.12); color: #7c3aed; margin: 0;">
+          <div class="modal-icon" aria-hidden="true">
             <i class="ti ti-info-circle"></i>
           </div>
           <div class="about-head-text">
             <div class="clear-modal-title" id="about-modal-title">À propos de l'application</div>
-            <p class="clear-modal-sub">Gestion des quittances — v2.1</p>
+            <p class="clear-modal-sub">Gestion des quittances — v2.2</p>
           </div>
         </div>
 
@@ -680,6 +720,17 @@
               <li><strong>Export Excel :</strong> Le bouton d'export génère le fichier à partir de votre modèle officiel (statistique.xlsx).</li>
               <li><strong>Mode sombre :</strong> Utilisez le bouton lune/soleil en haut pour changer le thème.</li>
               <li><strong>Taille d'écran :</strong> L'application nécessite un écran d'au moins 1122&times;820 px.</li>
+            </ul>
+          </div>
+
+          <div class="about-section">
+            <h4><i class="ti ti-crown" aria-hidden="true"></i> Compte VIP (clé produit)</h4>
+            <ul>
+              <li><strong>Clé produit :</strong> Une clé secrète débloque le mode VIP : thème personnalisé, animation de bienvenue avec son, badge VIP, accès à tous les boutons rapides et au menu clic droit.</li>
+              <li><strong>Sans clé :</strong> mode standard — thème par défaut, 1ère rangée de boutons uniquement, pas de menu clic droit.</li>
+              <li><strong>Entrer une clé :</strong> via « Tout effacer » → nouveau haut de session, champ « Clé produit » (optionnel).</li>
+              <li><strong>Auto totale :</strong> (VIP) en plein écran, activez « Auto totale » et indiquez les quittances restantes sur la 1ère page (1 à 5). Un total <strong>cumulé</strong> s'affiche après chaque page du registre (Cette page + Précédente + Total).</li>
+              <li><strong>Plein écran :</strong> le bouton « Plein écran » agrandit la liste (vérification/export) ; hors plein écran, pagination et recherche normales.</li>
             </ul>
           </div>
 
@@ -787,6 +838,20 @@
     <div id="quick-menu" class="quick-menu" role="menu" aria-label="Prix de la quittance"></div>
 
     <!-- ================================================
+     EXPORT EXCEL CONTEXT MENU (clic droit : protégé / non protégé)
+     ================================================ -->
+    <div id="export-menu" class="export-menu" role="menu" aria-label="Options d'export Excel">
+      <div class="export-menu-item" data-protect="1" onclick="exportMenuChoose(true)">
+        <i class="ti ti-shield-lock"></i> Export protégé
+        <span class="export-menu-sub">Mot de passe + verrouillé</span>
+      </div>
+      <div class="export-menu-item" data-protect="0" onclick="exportMenuChoose(false)">
+        <i class="ti ti-shield-off"></i> Export sans protection
+        <span class="export-menu-sub">Fichier libre</span>
+      </div>
+    </div>
+
+    <!-- ================================================
      KEY ANIMATION OVERLAY
      ================================================ -->
     <div id="key-anim-overlay" class="key-anim-overlay" aria-hidden="true">
@@ -797,8 +862,8 @@
     <!-- ================================================
      SCRIPTS — order matters: app → render → ui
      ================================================ -->
-    <script src="js/app.js?v=20260828"></script>
-    <script src="js/render.js?v=20260828"></script>
-    <script src="js/ui.js?v=20260828"></script>
+    <script src="js/app.js?v=20260926"></script>
+    <script src="js/render.js?v=20260926"></script>
+    <script src="js/ui.js?v=20260926"></script>
   </body>
 </html>
