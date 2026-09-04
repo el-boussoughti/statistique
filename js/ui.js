@@ -167,10 +167,14 @@ document.getElementById('clear-modal-confirm').addEventListener('click', functio
   verifyKeyAsync(keyValue).then(function(res) {
     if (res.ok) {
       if (res.idx >= 0 && res.anim) showKeyAnimation(res.anim, res.msg);
+    } else if (res.error === 'server') {
+      showModal('Erreur serveur : vérifiez la configuration (QUITTANCE_SECRET) puis redéployez.');
+    } else if (res.error === 'http') {
+      showModal('API injoignable (HTTP ' + res.status + '). Fonctions deployées ? Lancer Vercel et pousser le code.');
+    } else if (res.network) {
+      showModal('Impossible de vérifier la clé (hors-ligne ou erreur réseau).');
     } else {
-      showModal(res.network
-        ? 'Impossible de vérifier la clé (hors-ligne ou erreur réseau).'
-        : 'Clé invalide ou non autorisée.');
+      showModal('Clé invalide ou non autorisée.');
     }
   });
 });

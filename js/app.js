@@ -320,19 +320,25 @@ function postJSON(url, data) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
-  }).then(function(r) { return r.json(); });
+  }).then(function(r) {
+    /* Réponse non-JSON (page 404/500 statique = fonctions non déployées) */
+    return r.json().catch(function() {
+      return { ok: false, error: 'http', status: r.status };
+    });
+  });
 }
 
-/* Clé saisie -> /api/verify -> token signé stocké. Résultat { ok, idx?, anim?, msg?, network? } */
+/* Clé saisie -> /api/verify -> token signé stocké. Résultat { ok, idx?, anim?, msg?, network? | error? } */
 function verifyKeyAsync(keyValue) {
   return postJSON(API_VERIFY, { key: String(keyValue || '').trim() }).then(function(r) {
-    if (r && r.ok && r.id) {
+    if (r && r.ok && r.id && r.token) {
       try { localStorage.setItem(KEY_TOKEN, r.token); } catch (e) {}
       var idx = findKeyById(r.id);
       applyKeyState(idx >= 0 ? idx : -1);
       return { ok: true, idx: idx, anim: r.anim, msg: r.msg, id: r.id };
     }
     applyKeyState(-1);
+    if (r && r.error) return { ok: false, error: r.error, status: r.status };
     return { ok: false };
   }).catch(function() {
     applyKeyState(-1);

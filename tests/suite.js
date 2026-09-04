@@ -720,7 +720,9 @@ async function suiteServerlessVIP() {
   const tok = auth.signToken({ iat: now, exp: now + 3600, id: 'douae' });
   eq('verifyToken accepts valid token', auth.verifyToken(tok), { iat: now, exp: now + 3600, id: 'douae' });
 
-  const tampered = tok.slice(0, -1) + (tok.slice(-1) === 'a' ? 'b' : 'a');
+  const dot = tok.indexOf('.');
+  const sigFirst = tok[dot + 1] === 'a' ? 'b' : 'a';
+  const tampered = tok.slice(0, dot + 1) + sigFirst + tok.slice(dot + 2);
   eq('verifyToken rejects tampered signature', auth.verifyToken(tampered), null);
 
   const expired = auth.signToken({ iat: now - 7200, exp: now - 3600, id: 'douae' });
@@ -751,6 +753,12 @@ async function suiteServerlessVIP() {
   for (let i = 0; i < 15; i++) limited = auth.rateLimited('9.9.9.9', 15);
   eq('rate limiter allows under limit', limited, false);
   eq('rate limiter blocks over limit', auth.rateLimited('9.9.9.9', 15), true);
+
+  process.env.QUITTANCE_SECRET = '';
+  let threw = false;
+  try { auth.makeToken('testvip'); } catch (e) { threw = true; }
+  eq('server fails closed without secret (500 via adapter try/catch)', threw, true);
+  process.env.QUITTANCE_SECRET = 'suite-test-secret-key-0001';
   auth.SECRET_KEYS.pop();
 }
 
