@@ -13,6 +13,9 @@ function render() {
   var totalPages   = showAll ? 1 : Math.max(1, Math.ceil(totalEntries / pageSize));
   if (currentPage > totalPages) currentPage = totalPages;
 
+  updateQuittAu();
+  if (typeof guardianRefreshButton === 'function') guardianRefreshButton();
+
   /* Fullscreen classes */
   gridEl.classList.toggle('list-fullscreen',     fullscreen);
   gridEl.classList.toggle('graphics-fullscreen', graphicsFullscreen);
@@ -150,7 +153,7 @@ function render() {
       rows +=
         '<tr>' +
           '<td style="' + strikeStyle + 'font-weight:500;">' + e.n + '</td>' +
-          '<td><span class="type-badge ' + badgeClass + '">' + e.type + '</span></td>' +
+          '<td><span class="type-badge ' + badgeClass + '">' + escHtml(e.type) + '</span></td>' +
           '<td style="' + strikeStyle + 'font-weight:600;">' + e.montant.toFixed(2) + ' <span style="font-size:11px;color:var(--text-3);font-weight:400;">dh</span></td>' +
           '<td><div class="row-actions">' +
             '<button class="action-btn" onclick="editEntry(' + realIdx + ')" title="Modifier"><i class="ti ti-pencil"></i></button>' +
@@ -244,7 +247,7 @@ function render() {
       var kk = keys2[m2];
       cards +=
         '<div class="type-card">' +
-          '<div class="type-name">' + kk + '</div>' +
+          '<div class="type-name">' + escHtml(kk) + '</div>' +
           '<div class="type-stats">' + byType[kk].count + ' quittance' + (byType[kk].count > 1 ? 's' : '') + '</div>' +
           '<div class="type-stats" style="font-weight:600;color:var(--text-1);margin-top:2px;">' + byType[kk].total.toFixed(2) + ' dh</div>' +
         '</div>';

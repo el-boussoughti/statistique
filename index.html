@@ -22,16 +22,16 @@
     <!-- html2canvas (used for WhatsApp image export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- App styles -->
-    <link rel="stylesheet" href="css/style.css?v=20260926" />
+    <link rel="stylesheet" href="css/style.css?v=20260948" />
   </head>
-  <body>
+  <body class="no-key">
     <!-- Screen incompatibility overlay -->
     <div class="screen-warning" role="alert">
       <div class="screen-warning-box">
         <i class="ti ti-device-desktop-off" aria-hidden="true"></i>
         <h1>Écran incompatible</h1>
         <p>Votre écran n'est pas compatible avec cette application.</p>
-        <p class="screen-warning-hint">Largeur minimale requise : 1122 px · Hauteur minimale : 820 px.</p>
+        <p class="screen-warning-hint">Largeur minimale requise : 1372 px · Hauteur minimale : 820 px.</p>
       </div>
     </div>
 
@@ -331,6 +331,14 @@
                 />
                 <i class="ti ti-x search-clear" id="search-clear-btn" onclick="clearSearch()" style="display: none;" title="Effacer la recherche"></i>
               </div>
+              <button
+                class="btn-ghost guardian-btn"
+                id="guardian-btn"
+                title="Vérification des quittances"
+                aria-label="Vérification des quittances"
+              >
+                <i class="ti ti-shield-check" aria-hidden="true"></i> Gardien
+              </button>
               <div id="auto-totale-wrap" class="auto-totale-wrap">
                 <button
                   class="btn-ghost"
@@ -468,6 +476,7 @@
                 id="inp-operator"
                 placeholder="Nom de l'opérateur"
                 readonly
+                tabindex="-1"
               />
             </div>
             <div class="field">
@@ -477,6 +486,7 @@
                 id="inp-service"
                 placeholder="Service"
                 readonly
+                tabindex="-1"
               />
             </div>
             <div class="field">
@@ -487,6 +497,7 @@
                 placeholder="jj/mm/aaaa"
                 maxlength="10"
                 readonly
+                tabindex="-1"
                 aria-label="Date au format jj/mm/aaaa"
               />
             </div>
@@ -497,6 +508,7 @@
                 id="inp-registre"
                 placeholder="Ex: 699"
                 readonly
+                tabindex="-1"
                 aria-label="Numéro de registre"
               />
             </div>
@@ -507,6 +519,7 @@
                 id="inp-quitt-du"
                 placeholder="Ex: 393501"
                 readonly
+                tabindex="-1"
                 aria-label="Numéro de quittance du"
               />
             </div>
@@ -517,6 +530,7 @@
                 id="inp-quitt-au"
                 placeholder="Ex: 393602"
                 readonly
+                tabindex="-1"
                 aria-label="Numéro de quittance au"
               />
             </div>
@@ -601,13 +615,9 @@
             <label for="cm-registre">Registre N°</label>
             <input type="text" id="cm-registre" placeholder="Ex: 699" autocomplete="off" />
           </div>
-          <div class="field">
-            <label for="cm-quitt-du">Quittances N° Du</label>
+          <div class="field field-quitt-du">
+            <label for="cm-quitt-du">Quittances N° Du <span class="field-optional">= 1ʳᵉ quittance</span></label>
             <input type="text" id="cm-quitt-du" placeholder="Ex: 393501" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="cm-quitt-au">Au</label>
-            <input type="text" id="cm-quitt-au" placeholder="Ex: 393602" autocomplete="off" />
           </div>
         </div>
 
@@ -615,6 +625,81 @@
           <button class="modal-btn modal-cancel" id="clear-modal-cancel">Annuler</button>
           <button class="modal-btn modal-confirm clear-modal-confirm" id="clear-modal-confirm">
             <i class="ti ti-trash" aria-hidden="true"></i> Effacer &amp; Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================
+     GUARDIAN REVIEW MODAL (Vérification des prix)
+     ================================================ -->
+    <div id="guardian-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Vérification des quittances">
+      <div class="modal-box guardian-modal-box">
+        <div class="guardian-modal-header">
+          <div class="guardian-modal-head-icon" aria-hidden="true"><i class="ti ti-shield-check"></i></div>
+          <div class="guardian-modal-head-text">
+            <div class="guardian-modal-title">Le Gardien</div>
+            <div class="guardian-modal-sub">Vérification automatique des prix</div>
+          </div>
+          <button class="guardian-close" onclick="guardianCloseModal()" aria-label="Fermer" title="Fermer (Échap)">
+            <i class="ti ti-x" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="guardian-tabs" role="tablist">
+          <button class="guardian-tab" data-tab="correct" onclick="guardianSwitchTab('correct')" role="tab">
+            <i class="ti ti-circle-check" aria-hidden="true"></i>
+            Correct <span class="guardian-count g-correct" id="g-count-correct">0</span>
+          </button>
+          <button class="guardian-tab" data-tab="warning" onclick="guardianSwitchTab('warning')" role="tab">
+            <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+            Avertissement <span class="guardian-count g-warning" id="g-count-warning">0</span>
+          </button>
+          <button class="guardian-tab" data-tab="mistake" onclick="guardianSwitchTab('mistake')" role="tab">
+            <i class="ti ti-alert-circle" aria-hidden="true"></i>
+            Erreur <span class="guardian-count g-mistake" id="g-count-mistake">0</span>
+          </button>
+        </div>
+
+        <div class="guardian-list" id="guardian-list"></div>
+
+        <div class="guardian-modal-footer">
+          <span class="guardian-footer-total" id="guardian-footer-total"></span>
+          <button class="g-btn g-btn-close" onclick="guardianCloseModal()">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================
+     GUARDIAN FIX MODAL (Corriger une quittance)
+     ================================================ -->
+    <div id="guardian-fix-modal" class="modal-overlay fix-modal-overlay" role="dialog" aria-modal="true" aria-label="Corriger la quittance">
+      <div class="modal-box guardian-fix-box">
+        <div class="modal-icon fix-modal-icon" aria-hidden="true"><i class="ti ti-tool"></i></div>
+        <div class="clear-modal-title">Corriger la quittance</div>
+        <p class="clear-modal-sub">Saisissez la valeur correcte pour cette quittance.</p>
+
+        <div class="guardian-fix-target" id="guardian-fix-target"></div>
+
+        <div class="guardian-fix-field">
+          <label for="guardian-fix-input">Nouveau montant (dh)</label>
+          <div class="fix-input-wrap">
+            <input
+              type="text"
+              id="guardian-fix-input"
+              placeholder="0"
+              inputmode="decimal"
+              autocomplete="off"
+            />
+            <span class="fix-unit">dh</span>
+          </div>
+          <p class="guardian-fix-error" id="guardian-fix-error"></p>
+        </div>
+
+        <div class="modal-actions clear-modal-actions">
+          <button class="modal-btn modal-cancel" onclick="guardianFixCancel()">Annuler</button>
+          <button class="modal-btn modal-confirm fix-confirm-btn" onclick="guardianFixConfirm()">
+            <i class="ti ti-check" aria-hidden="true"></i> Corriger
           </button>
         </div>
       </div>
@@ -717,9 +802,11 @@
               <li><strong>Boutons rapides :</strong> Clic gauche pour ajouter au prix par défaut, clic droit pour choisir un prix (défaut, x2, x3 ou un prix personnalisé).</li>
               <li><strong>Annulation :</strong> Utilisez l'icône d'annulation pour passer une quittance en « ANNUL » en gardant son montant.</li>
               <li><strong>Graphiques :</strong> Ouvrez les graphiques plein écran avec le bouton « Voir les graphiques » en bas du formulaire.</li>
-              <li><strong>Export Excel :</strong> Le bouton d'export génère le fichier à partir de votre modèle officiel (statistique.xlsx).</li>
+              <li><strong>Export Excel :</strong> Le bouton d'export génère le fichier à partir de votre modèle officiel (statistique.xlsx). Le fichier exporté est <strong>protégé par mot de passe</strong>&nbsp;: toutes les cellules sont verrouillées — impossible de modifier, formater, copier ou sélectionner. (Clic droit sur le bouton Export pour choisir une version <em>sans protection</em>.)</li>
               <li><strong>Mode sombre :</strong> Utilisez le bouton lune/soleil en haut pour changer le thème.</li>
-              <li><strong>Taille d'écran :</strong> L'application nécessite un écran d'au moins 1122&times;820 px.</li>
+              <li><strong>Azkar AFK :</strong> Après 60 s d'inactivité, un rappel Azkar s'affiche au centre ; il se ferme automatiquement dès la première activité (souris ou clavier).</li>
+              <li><strong>Nouvelle session :</strong> le champ « Quittances N° Du » est <strong>obligatoire</strong> (= 1ʳᵉ quittance) et la touche <strong>Tab</strong> passe au prochain champ encore vide.</li>
+              <li><strong>Taille d'écran :</strong> L'application nécessite un écran d'au moins 1372&times;820 px.</li>
             </ul>
           </div>
 
@@ -729,6 +816,7 @@
               <li><strong>Clé produit :</strong> Une clé secrète débloque le mode VIP : thème personnalisé, animation de bienvenue avec son, badge VIP, accès à tous les boutons rapides et au menu clic droit.</li>
               <li><strong>Sans clé :</strong> mode standard — thème par défaut, 1ère rangée de boutons uniquement, pas de menu clic droit.</li>
               <li><strong>Entrer une clé :</strong> via « Tout effacer » → nouveau haut de session, champ « Clé produit » (optionnel).</li>
+              <li><strong>Le Gardien :</strong> (VIP) le bouton « Gardien » dans l'en-tête de la liste vérifie automatiquement les prix (C1=40, C2=60, CML=100, CMD=40, ACC multiples de 80, combinaisons connues RX/LABO/HOSP/EXP…). Couleur du bouton : thème si tout est correct, <strong>orange</strong> s'il y a des à-vérifier, <strong>rouge</strong> s'il y a des erreurs. Le modal « Le Gardien » a 3 onglets (Correct / Avertissement / Erreur) : validez une valeur avec « C'est correct » ou corrigez-la avec « Corriger… ».</li>
               <li><strong>Auto totale :</strong> (VIP) en plein écran, activez « Auto totale » et indiquez les quittances restantes sur la 1ère page (1 à 5). Un total <strong>cumulé</strong> s'affiche après chaque page du registre (Cette page + Précédente + Total).</li>
               <li><strong>Plein écran :</strong> le bouton « Plein écran » agrandit la liste (vérification/export) ; hors plein écran, pagination et recherche normales.</li>
             </ul>
@@ -860,10 +948,26 @@
     </div>
 
     <!-- ================================================
+     AZKAR POPUP (affiché quand l'utilisateur est inactif)
+     ================================================ -->
+    <div id="azkar-dialog" class="azkar-dialog" role="alert" aria-label="Rappel Azkar">
+      <div class="azkar-card">
+        <button class="azkar-close azkar-close-btn" title="Fermer" aria-label="Fermer">
+          <i class="ti ti-x"></i>
+        </button>
+        <div class="azkar-icon" aria-hidden="true"><i class="ti ti-building-mosque"></i></div>
+        <p class="azkar-ar" id="azkar-ar"></p>
+        <p class="azkar-hint">Rappel automatique (inactivité)</p>
+      </div>
+    </div>
+
+    <!-- ================================================
      SCRIPTS — order matters: app → render → ui
      ================================================ -->
-    <script src="js/app.js?v=20260926"></script>
-    <script src="js/render.js?v=20260926"></script>
-    <script src="js/ui.js?v=20260926"></script>
+    <script src="js/app.js?v=20260953"></script>
+    <script src="js/render.js?v=20260950"></script>
+    <script src="js/ui.js?v=20260954"></script>
+    <script src="js/azkar.js?v=20260937"></script>
+    <script src="js/guardian.js?v=20260952"></script>
   </body>
 </html>

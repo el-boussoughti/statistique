@@ -39,10 +39,11 @@ function openClearSessionModal() {
 
   /* New session: all inputs start empty except date (today) */
   document.getElementById('cm-operator').value = '';
+  document.getElementById('cm-operator').readOnly = false;
+  cmOperatorLocked = false;
   document.getElementById('cm-service').value  = '';
   document.getElementById('cm-registre').value = '';
   document.getElementById('cm-quitt-du').value = '';
-  document.getElementById('cm-quitt-au').value = '';
   /* Always reset date to today */
   document.getElementById('cm-date').value = setToday();
   /* Always start with an empty product key */
@@ -55,11 +56,21 @@ function openClearSessionModal() {
 }
 
 /* Product key → auto-fill operator (case-insensitive) */
+var cmOperatorLocked = false;
+var cmOperatorCanonical = '';
+
 document.getElementById('cm-key').addEventListener('input', function() {
   var inp = document.getElementById('cm-key');
+  var opEl = document.getElementById('cm-operator');
   findSecretKey(inp.value).then(function(idx) {
     if (idx >= 0) {
-      document.getElementById('cm-operator').value = secretKeys[idx].operator;
+      opEl.value = secretKeys[idx].operator.toUpperCase();
+      opEl.readOnly = true;
+      cmOperatorCanonical = opEl.value;
+      cmOperatorLocked = true;
+    } else {
+      opEl.readOnly = false;
+      cmOperatorLocked = false;
     }
   });
 });
@@ -85,12 +96,22 @@ function upperOnInput(id) {
 upperOnInput('cm-operator');
 upperOnInput('cm-service');
 
+/* Protect cm-operator from F12 edits when locked by product key */
+setInterval(function() {
+  if (!cmOperatorLocked) return;
+  var el = document.getElementById('cm-operator');
+  if (!el) return;
+  el.readOnly = true;
+  if (el.value !== cmOperatorCanonical) el.value = cmOperatorCanonical;
+}, 800);
+
 document.getElementById('clear-modal-confirm').addEventListener('click', function() {
   var reqs = [
     { id: 'cm-operator', label: 'Opérateur' },
     { id: 'cm-service',  label: 'Service' },
     { id: 'cm-date',     label: 'Date' },
-    { id: 'cm-registre', label: 'Registre N°' }
+    { id: 'cm-registre', label: 'Registre N°' },
+    { id: 'cm-quitt-du', label: 'Quittances N° Du' }
   ];
   for (var i = 0; i < reqs.length; i++) {
     var r = document.getElementById(reqs[i].id);
@@ -101,22 +122,29 @@ document.getElementById('clear-modal-confirm').addEventListener('click', functio
     }
   }
 
+  var duN = parseInt(document.getElementById('cm-quitt-du').value.trim(), 10);
+  if (isNaN(duN) || duN <= 0) {
+    showModal('Quittances N° Du doit être un numéro valide (ex. 393501).');
+    document.getElementById('cm-quitt-du').focus();
+    return;
+  }
+
   var overlay = document.getElementById('clear-modal-overlay');
   overlay.classList.remove('open');
 
   /* Write new info values back to sidebar inputs */
-  document.getElementById('inp-operator').value  = document.getElementById('cm-operator').value.toUpperCase();
+  document.getElementById('inp-operator').value  = cmOperatorLocked ? cmOperatorCanonical : document.getElementById('cm-operator').value.toUpperCase();
   document.getElementById('inp-service').value   = document.getElementById('cm-service').value.toUpperCase();
   document.getElementById('inp-date').value      = document.getElementById('cm-date').value;
   document.getElementById('inp-registre').value  = document.getElementById('cm-registre').value;
   document.getElementById('inp-quitt-du').value  = document.getElementById('cm-quitt-du').value;
-  document.getElementById('inp-quitt-au').value  = document.getElementById('cm-quitt-au').value;
+  document.getElementById('inp-quitt-au').value  = '';
   syncInfoCanonical();
 
   /* Clear all entries */
   entries = [];
-  nextN   = null;
-  document.getElementById('inp-n').value = '';
+  nextN = duN;
+  document.getElementById('inp-n').value = (nextN !== null) ? nextN : '';
   saveState();
   updateNField();
 
@@ -128,16 +156,46 @@ document.getElementById('clear-modal-confirm').addEventListener('click', functio
 
   render();
 
-  /* Product key handling (async, case-insensitive hash match) */
-  findSecretKey(document.getElementById('cm-key').value).then(function(kIdx) {
-    applyKeyState(kIdx);
-    var keyDef = kIdx >= 0 ? secretKeys[kIdx] : null;
-    if (keyDef) showKeyAnimation(keyDef.anim, keyDef.msg);
+  /* Product key handling : le VIP persistant nécessite un token signé
+     par /api/verify (autorité serveur). L'auto-remplissage opérateur reste
+     côté client (UX pure) via l'événement 'input' ci-dessus. */
+  var keyValue = document.getElementById('cm-key').value;
+  if (!String(keyValue || '').trim()) {
+    applyKeyState(-1);
+    return;
+  }
+  verifyKeyAsync(keyValue).then(function(res) {
+    if (res.ok) {
+      if (res.idx >= 0 && res.anim) showKeyAnimation(res.anim, res.msg);
+    } else {
+      showModal(res.network
+        ? 'Impossible de vérifier la clé (hors-ligne ou erreur réseau).'
+        : 'Clé invalide ou non autorisée.');
+    }
   });
 });
 
 document.getElementById('clear-modal-cancel').addEventListener('click', function() {
   document.getElementById('clear-modal-overlay').classList.remove('open');
+});
+
+/* Tab dans le modal Nouvelle session : aller au prochain champ VIDE
+   (les champs déjà remplis sont ignorés) */
+document.getElementById('clear-modal-overlay').addEventListener('keydown', function(e) {
+  if (e.key !== 'Tab') return;
+  var inputs = document.querySelectorAll('#clear-modal-overlay .clear-modal-form input');
+  var idx = Array.prototype.indexOf.call(inputs, e.target);
+  if (idx < 0) return;
+  var n = inputs.length;
+  for (var k = 1; k <= n; k++) {
+    var el = inputs[(idx + k) % n];
+    if (!el.value.trim()) {
+      el.focus();
+      e.preventDefault();
+      return;
+    }
+  }
+  /* Aucun champ vide restant : comportement Tab par défaut */
 });
 
 /* Close on backdrop click */
@@ -1104,10 +1162,9 @@ document.addEventListener('click', function(e) {
   loadState();
   hardenInfoSection();
 
-  /* Restore last used product key state (theme + locked mode) */
-  var storedKey = null;
-  try { storedKey = localStorage.getItem(KEY_STORAGE); } catch (e) {}
-  applyKeyState(storedKey ? findKeyById(storedKey) : -1);
+  /* Restore VIP via token serveur validé (async, fail-closed).
+     L'id seul en localStorage n'est PLUS jamais suffisant (spoofable). */
+  restoreKeyState();
   renderAutoTotaleUI();
 
   /* Set today if date is empty */
