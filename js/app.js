@@ -169,23 +169,17 @@ function saveAutoTotale() {
 loadAutoTotale();
 
 /* ---- Product secret keys ----
-   RÔLE CLIENT (UX uniquement) : la liste ci-dessous sert à l'auto-remplissage
-   de l'opérateur, au thème et à l'animation — PAS à accorder le VIP.
-
-   AUTORITÉ SERVEUR : le statut VIP persistant repose sur un token signé
-   HMAC-SHA256 délivré par /api/verify (Vercel). Le client ne fait que stocker
-   le token (`quittance_secret_token`) et le renvoyer au chargement à
-   /api/check. Sans token valide => applyKeyState(-1). Le token ne peut pas
-   être forgé : le secret HMAC n'existe QUE côté serveur (env QUITTANCE_SECRET).
-
-   MAINTENANCE : ajouter/éditer une clé dans CES DEUX fichiers :
-   - ici (copie client, UX) ;
-   - lib/auth.js (copie serveur, autorité — signe le token).
-   Pour générer le hash : voir commentaire ci-dessous. */
-var KEY_STORAGE = 'quittance_secret_key';   // id (cosmétique, non fiable seul)
-var API_VERIFY = 'api/verify';              // POST {key}      -> {ok, token, ...}
-var API_CHECK  = 'api/check';               // POST {token}    -> {ok, ...}
-var KEY_TOKEN  = 'quittance_secret_token';  // token signé (seul marqueur VIP fiable)
+   Les clés ne sont PAS stockées en clair : seul un hash SHA-256
+   (de la clé en minuscules) est embarqué. Impossible de retrouver
+   la clé depuis le code source (F12).
+   Pour ajouter une clé :
+     1. choisissez une clé secrète (ex : 'ma-cle')
+     2. calculez son SHA-256 en minuscules, ex dans la console :
+        async h=>crypto.subtle.digest('SHA-256',new TextEncoder().encode(h.trim().toLowerCase()))
+            .then(b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''))
+        puis h('ma-cle')
+     3. copiez le hash ci-dessous + id, operator, theme, anim, msg. */
+var KEY_STORAGE    = 'quittance_secret_key';
 var secretKeys     = [
   {
     id:       'hamza',                                         // identifiant interne (stocké en localStorage)
@@ -310,64 +304,6 @@ function applyKeyState(idx) {
     document.body.classList.add('no-key');
     try { localStorage.removeItem(KEY_STORAGE); } catch (e) {}
   }
-}
-
-/* ---- VIP via token serveur (seule source de vérité persistante) ---- */
-
-function postJSON(url, data) {
-  if (typeof fetch !== 'function') return Promise.reject(new Error('fetch unavailable'));
-  return fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  }).then(function(r) {
-    /* Réponse non-JSON (page 404/500 statique = fonctions non déployées) */
-    return r.json().catch(function() {
-      return { ok: false, error: 'http', status: r.status };
-    });
-  });
-}
-
-/* Clé saisie -> /api/verify -> token signé stocké. Résultat { ok, idx?, anim?, msg?, network? | error? } */
-function verifyKeyAsync(keyValue) {
-  return postJSON(API_VERIFY, { key: String(keyValue || '').trim() }).then(function(r) {
-    if (r && r.ok && r.id && r.token) {
-      try { localStorage.setItem(KEY_TOKEN, r.token); } catch (e) {}
-      var idx = findKeyById(r.id);
-      applyKeyState(idx >= 0 ? idx : -1);
-      return { ok: true, idx: idx, anim: r.anim, msg: r.msg, id: r.id };
-    }
-    applyKeyState(-1);
-    if (r && r.error) return { ok: false, error: r.error, status: r.status };
-    if (r && r.reason === 'rate') return { ok: false, rate: true };
-    return { ok: false };
-  }).catch(function() {
-    applyKeyState(-1);
-    return { ok: false, network: true };
-  });
-}
-
-/* Chargement : valide le token stocké auprès du serveur ; sinon NO VIP.
-   L'id stocké (KEY_STORAGE) n'est JAMAIS suffisant seul (spoofable). */
-function restoreKeyState() {
-  var token = null;
-  try { token = localStorage.getItem(KEY_TOKEN); } catch (e) {}
-  if (!token) {
-    applyKeyState(-1);
-    return Promise.resolve(false);
-  }
-  return postJSON(API_CHECK, { token: token }).then(function(r) {
-    if (r && r.ok && r.id) {
-      applyKeyState(findKeyById(r.id));
-      return true;
-    }
-    try { localStorage.removeItem(KEY_TOKEN); } catch (e) {}
-    applyKeyState(-1);
-    return false;
-  }).catch(function() {
-    applyKeyState(-1);
-    return false;
-  });
 }
 
 /* ---- Helpers ---- */

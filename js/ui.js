@@ -156,28 +156,11 @@ document.getElementById('clear-modal-confirm').addEventListener('click', functio
 
   render();
 
-  /* Product key handling : le VIP persistant nécessite un token signé
-     par /api/verify (autorité serveur). L'auto-remplissage opérateur reste
-     côté client (UX pure) via l'événement 'input' ci-dessus. */
-  var keyValue = document.getElementById('cm-key').value;
-  if (!String(keyValue || '').trim()) {
-    applyKeyState(-1);
-    return;
-  }
-  verifyKeyAsync(keyValue).then(function(res) {
-    if (res.ok) {
-      if (res.idx >= 0 && res.anim) showKeyAnimation(res.anim, res.msg);
-    } else if (res.error === 'server') {
-      showModal('Erreur serveur : vérifiez la configuration (QUITTANCE_SECRET) puis redéployez.');
-    } else if (res.error === 'http') {
-      showModal('API injoignable (HTTP ' + res.status + '). Fonctions deployées ? Lancer Vercel et pousser le code.');
-    } else if (res.network) {
-      showModal('Impossible de vérifier la clé (hors-ligne ou erreur réseau).');
-    } else if (res.rate) {
-      showModal('Trop de tentatives. Réessayez dans une minute.');
-    } else {
-      showModal('Clé invalide ou non autorisée.');
-    }
+  /* Product key handling (async, case-insensitive hash match) */
+  findSecretKey(document.getElementById('cm-key').value).then(function(kIdx) {
+    applyKeyState(kIdx);
+    var keyDef = kIdx >= 0 ? secretKeys[kIdx] : null;
+    if (keyDef) showKeyAnimation(keyDef.anim, keyDef.msg);
   });
 });
 
@@ -1168,9 +1151,10 @@ document.addEventListener('click', function(e) {
   loadState();
   hardenInfoSection();
 
-  /* Restore VIP via token serveur validé (async, fail-closed).
-     L'id seul en localStorage n'est PLUS jamais suffisant (spoofable). */
-  restoreKeyState();
+  /* Restore last used product key state (theme + locked mode) */
+  var storedKey = null;
+  try { storedKey = localStorage.getItem(KEY_STORAGE); } catch (e) {}
+  applyKeyState(storedKey ? findKeyById(storedKey) : -1);
   renderAutoTotaleUI();
 
   /* Set today if date is empty */

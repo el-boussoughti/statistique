@@ -3,10 +3,6 @@ const path = require('path');
 const assert = require('assert');
 const G = global;
 
-process.env.QUITTANCE_SECRET = 'suite-test-secret-key-0001';
-process.env.QUITTANCE_TOKEN_TTL_DAYS = '30';
-const auth = require('../lib/auth');
-
 let passed = 0;
 let failed = 0;
 const failures = [];
@@ -713,55 +709,6 @@ async function suiteExport() {
   eq('no protection when protect=false', protectArgs, null);
 }
 
-async function suiteServerlessVIP() {
-  console.log('\n== VIP côté serveur (token signé HMAC) ==');
-
-  const now = Math.floor(Date.now() / 1000);
-  const tok = auth.signToken({ iat: now, exp: now + 3600, id: 'douae' });
-  eq('verifyToken accepts valid token', auth.verifyToken(tok), { iat: now, exp: now + 3600, id: 'douae' });
-
-  const dot = tok.indexOf('.');
-  const sigFirst = tok[dot + 1] === 'a' ? 'b' : 'a';
-  const tampered = tok.slice(0, dot + 1) + sigFirst + tok.slice(dot + 2);
-  eq('verifyToken rejects tampered signature', auth.verifyToken(tampered), null);
-
-  const expired = auth.signToken({ iat: now - 7200, exp: now - 3600, id: 'douae' });
-  eq('verifyToken rejects expired token', auth.verifyToken(expired), null);
-
-  eq('verifyToken rejects garbage', auth.verifyToken('not-a-token'), null);
-  eq('verifyToken rejects non-string', auth.verifyToken(12345), null);
-
-  const rGarbage = auth.verifyHandler({ method: 'POST', body: { key: 'totally-wrong' }, ip: '1.1.1.1' });
-  eq('verify key garbage -> ok:false', rGarbage.json.ok, false);
-  eq('verify GET not allowed', auth.verifyHandler({ method: 'GET', body: {}, ip: '1.1.1.2' }).status, 405);
-
-  const knownHash = auth.sha256Hex('testvip');
-  auth.SECRET_KEYS.push({ id: 'testvip', hash: knownHash, operator: 'Test', theme: 'snake', anim: 'snake', msg: 'Hi' });
-  const rOk = auth.verifyHandler({ method: 'POST', body: { key: '  TESTVIP ' }, ip: '1.1.1.3' });
-  eq('verify valid key -> ok:true', rOk.json.ok, true);
-  eq('verify returns id', rOk.json.id, 'testvip');
-  ok('verify issues 3-part token', typeof rOk.json.token === 'string' && rOk.json.token.split('.').length === 2);
-
-  const cOk = auth.checkHandler({ body: { token: rOk.json.token }, ip: '1.1.1.4' });
-  eq('check valid token -> ok:true', cOk.json.ok, true);
-  eq('check returns profile id', cOk.json.id, 'testvip');
-  eq('check wrong token -> ok:false', auth.checkHandler({ body: { token: 'tampered.token' }, ip: '1.1.1.5' }).json.ok, false);
-  eq('check expired token -> ok:false', auth.checkHandler({ body: { token: expired }, ip: '1.1.1.6' }).json.ok, false);
-  eq('check string-body JSON works', auth.checkHandler({ body: JSON.stringify({ token: 'x.y' }), ip: '1.1.1.7' }).json.ok, false);
-
-  let limited = null;
-  for (let i = 0; i < 15; i++) limited = auth.rateLimited('9.9.9.9', 15);
-  eq('rate limiter allows under limit', limited, false);
-  eq('rate limiter blocks over limit', auth.rateLimited('9.9.9.9', 15), true);
-
-  process.env.QUITTANCE_SECRET = '';
-  let threw = false;
-  try { auth.makeToken('testvip'); } catch (e) { threw = true; }
-  eq('server fails closed without secret (500 via adapter try/catch)', threw, true);
-  process.env.QUITTANCE_SECRET = 'suite-test-secret-key-0001';
-  auth.SECRET_KEYS.pop();
-}
-
 (async function main() {
   resetAll();
   await suiteSecurity();
@@ -775,7 +722,6 @@ async function suiteServerlessVIP() {
   await suiteGrandesDonnees();
   await suiteAzkar();
   await suiteExport();
-  await suiteServerlessVIP();
 
   (docLs['DOMContentLoaded'] || []).forEach(fn => { try { fn(); } catch (e) {} });
   console.log('\n========================================');
