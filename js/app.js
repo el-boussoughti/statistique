@@ -339,6 +339,7 @@ function verifyKeyAsync(keyValue) {
     }
     applyKeyState(-1);
     if (r && r.error) return { ok: false, error: r.error, status: r.status };
+    if (r && r.reason === 'rate') return { ok: false, rate: true };
     return { ok: false };
   }).catch(function() {
     applyKeyState(-1);

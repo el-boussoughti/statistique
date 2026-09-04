@@ -173,6 +173,8 @@ document.getElementById('clear-modal-confirm').addEventListener('click', functio
       showModal('API injoignable (HTTP ' + res.status + '). Fonctions deployées ? Lancer Vercel et pousser le code.');
     } else if (res.network) {
       showModal('Impossible de vérifier la clé (hors-ligne ou erreur réseau).');
+    } else if (res.rate) {
+      showModal('Trop de tentatives. Réessayez dans une minute.');
     } else {
       showModal('Clé invalide ou non autorisée.');
     }
