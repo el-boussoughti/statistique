@@ -22,7 +22,7 @@
     <!-- html2canvas (used for WhatsApp image export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- App styles -->
-    <link rel="stylesheet" href="css/style.css?v=20260948" />
+    <link rel="stylesheet" href="css/style.css?v=20260954" />
   </head>
   <body>
     <!-- Screen incompatibility overlay -->
@@ -49,7 +49,7 @@
             <span class="brand-sub">
               Gestion des reçus
               <span class="topbar-vip" title="Compte VIP — clé produit active">
-                <i class="ti ti-crown" aria-hidden="true"></i> VIP
+                <i class="ti ti-crown" aria-hidden="true"></i><span class="topbar-vip-text">VIP</span>
               </span>
             </span>
           </div>
@@ -814,6 +814,7 @@
             <h4><i class="ti ti-crown" aria-hidden="true"></i> Compte VIP (clé produit)</h4>
             <ul>
               <li><strong>Clé produit :</strong> Une clé secrète débloque le mode VIP : thème personnalisé, animation de bienvenue avec son, badge VIP, accès à tous les boutons rapides et au menu clic droit.</li>
+              <li><strong>VIP Pro Max :</strong> certaines clés (ex: Maha) sont « Pro Max » — badge « VIP Pro Max » animé + effets visuels premium dans le thème.</li>
               <li><strong>Sans clé :</strong> mode standard — thème par défaut, 1ère rangée de boutons uniquement, pas de menu clic droit.</li>
               <li><strong>Entrer une clé :</strong> via « Tout effacer » → nouveau haut de session, champ « Clé produit » (optionnel).</li>
               <li><strong>Le Gardien :</strong> (VIP) le bouton « Gardien » dans l'en-tête de la liste vérifie automatiquement les prix (C1=40, C2=60, CML=100, CMD=40, ACC multiples de 80, combinaisons connues RX/LABO/HOSP/EXP…). Couleur du bouton : thème si tout est correct, <strong>orange</strong> s'il y a des à-vérifier, <strong>rouge</strong> s'il y a des erreurs. Le modal « Le Gardien » a 3 onglets (Correct / Avertissement / Erreur) : validez une valeur avec « C'est correct » ou corrigez-la avec « Corriger… ».</li>
@@ -964,7 +965,7 @@
     <!-- ================================================
      SCRIPTS — order matters: app → render → ui
      ================================================ -->
-    <script src="js/app.js?v=20260951"></script>
+    <script src="js/app.js?v=20260954"></script>
     <script src="js/render.js?v=20260950"></script>
     <script src="js/ui.js?v=20260947"></script>
     <script src="js/azkar.js?v=20260937"></script>

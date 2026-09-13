@@ -809,6 +809,22 @@ body::before {
 }
 body:not(.no-key) .topbar-vip { display: inline-flex; }
 
+/* VIP Pro Max — special animated badge */
+.topbar-vip.vip-promax {
+  background: linear-gradient(135deg, var(--accent) 0%, #ff6b6b 30%, var(--accent-hover) 100%);
+  box-shadow: 0 0 8px var(--accent-glow),
+              0 0 16px var(--accent-glow),
+              inset 0 0 6px rgba(255,255,255,0.3);
+  animation: vipPromaxPulse 3s ease-in-out infinite;
+}
+.topbar-vip.vip-promax i {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+@keyframes vipPromaxPulse {
+  0%, 100% { transform: scale(1);     opacity: 1; }
+  50%      { transform: scale(1.08);  opacity: 0.9; }
+}
+
 .topbar-actions { display: flex; gap: 8px; align-items: center; }
 
 .topbar-divider {

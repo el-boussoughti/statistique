@@ -240,12 +240,13 @@ var secretKeys     = [
     msg:      'Rayonne, Marhba bik !',
   },
   {
-    id:       'bunny',
-    hash:     'e441f9baee99ba89af98883c109515a7344f17aa94f81efb2fb4b017b92f27f6',
-    operator: 'Bunny',
+    id:       'maha',
+    hash:     'e278993d94bc265f6c6d75b4fddc68c0df9b34ee1c00fb1daec4a3c20b7f546d',
+    operator: 'Maha',
     theme:    'bunny',
     anim:     'bunny',
-    msg:      'Adorable, Marhba bik !',
+    msg:      'Salam Maha l VIP, Marhba bik !',
+    tier:     'promax',
   },
   /* Ajoutez d'autres clés ici (hash, pas la clé en clair) :
   {
@@ -295,13 +296,28 @@ function findKeyById(id) {
 function applyKeyState(idx) {
   curKeyIdx = idx;
   var root = document.documentElement;
+  var badge = document.querySelector('.topbar-vip');
+  var badgeText = document.querySelector('.topbar-vip .topbar-vip-text');
   if (idx >= 0) {
     root.setAttribute('data-keytheme', secretKeys[idx].theme);
     document.body.classList.remove('no-key');
+    var isPromax = secretKeys[idx].tier === 'promax';
+    document.body.classList.toggle('vip-promax', isPromax);
+    if (badge) {
+      badge.classList.toggle('vip-promax', isPromax);
+      badge.title = 'Compte VIP' + (isPromax ? ' Pro Max' : '') + ' — clé produit active';
+      if (badgeText) badgeText.textContent = isPromax ? 'VIP Pro Max' : 'VIP';
+    }
     try { localStorage.setItem(KEY_STORAGE, secretKeys[idx].id); } catch (e) {}
   } else {
     root.removeAttribute('data-keytheme');
     document.body.classList.add('no-key');
+    document.body.classList.remove('vip-promax');
+    if (badge) {
+      badge.classList.remove('vip-promax');
+      badge.title = 'Compte VIP — clé produit active';
+      if (badgeText) badgeText.textContent = 'VIP';
+    }
     try { localStorage.removeItem(KEY_STORAGE); } catch (e) {}
   }
 }
