@@ -248,6 +248,14 @@ var secretKeys     = [
     msg:      'Salam Maha l VIP, Marhba bik !',
     tier:     'promax',
   },
+  {
+    id:       'ismael',
+    hash:     '10558b76786f4aa631cdda1ba7c9b1d94b95d598b9e9935671c1fb0a447f6f93',
+    operator: 'Ismael',
+    theme:    'rajae',
+    anim:     'rajae',
+    msg:      'Salam loay ! Marhba bik !',
+  },
   /* Ajoutez d'autres clés ici (hash, pas la clé en clair) :
   {
     id:       'mon-id',

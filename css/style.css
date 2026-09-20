@@ -259,6 +259,76 @@
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.4),  0 1px 2px rgba(0,0,0,0.2);
     --shadow:    0 4px 16px rgba(0,0,0,0.38), 0 1px 4px rgba(0,0,0,0.2);
     --shadow-lg: 0 20px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.3);
+}
+}
+
+/* --- Rajae theme (light) --- */
+:root[data-keytheme="rajae"] {
+  --accent:       #007D3E;
+  --accent-hover: #005F2F;
+  --accent-light: rgba(0,125,62,0.10);
+  --accent-glow:  rgba(0,125,62,0.25);
+
+  --text-1: #111827;
+  --text-2: #374151;
+  --text-3: #6B7280;
+  --text-4: #9CA3AF;
+
+  --bg:            #EAF8F0;
+  --surface:       #FFFFFF;
+  --surface-2:     #F3FBF6;
+  --border:        #CDE9DA;
+  --border-strong: #A3D4BA;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:    0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 20px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* --- Rajae theme (dark) --- */
+:root[data-keytheme="rajae"][data-theme="dark"] {
+  --accent:       #00B758;
+  --accent-hover: #00DB69;
+  --accent-light: rgba(0,183,88,0.14);
+  --accent-glow:  rgba(0,183,88,0.30);
+
+  --text-1: #F9FAFB;
+  --text-2: #E5E7EB;
+  --text-3: #9CA3AF;
+  --text-4: #6B7280;
+
+  --bg:            #0A1A12;
+  --surface:       #11261B;
+  --surface-2:     #163223;
+  --border:        #234B36;
+  --border-strong: #33694D;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4),  0 1px 2px rgba(0,0,0,0.2);
+  --shadow:    0 4px 16px rgba(0,0,0,0.38), 0 1px 4px rgba(0,0,0,0.2);
+  --shadow-lg: 0 20px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-keytheme="rajae"]:not([data-theme="light"]) {
+    --accent:       #00B758;
+    --accent-hover: #00DB69;
+    --accent-light: rgba(0,183,88,0.14);
+    --accent-glow:  rgba(0,183,88,0.30);
+
+    --text-1: #F9FAFB;
+    --text-2: #E5E7EB;
+    --text-3: #9CA3AF;
+    --text-4: #6B7280;
+
+    --bg:            #0A1A12;
+    --surface:       #11261B;
+    --surface-2:     #163223;
+    --border:        #234B36;
+    --border-strong: #33694D;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.4),  0 1px 2px rgba(0,0,0,0.2);
+    --shadow:    0 4px 16px rgba(0,0,0,0.38), 0 1px 4px rgba(0,0,0,0.2);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.3);
   }
 }
 

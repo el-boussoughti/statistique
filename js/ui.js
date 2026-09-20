@@ -993,6 +993,7 @@ var ANIM_FX = {
   unicorn:   { sticker: '🦄', floats: ['🦄', '✨', '🌈', '🪄', '🍬', '☁️'] },
   sunflower: { sticker: '🌻', floats: ['🌻', '🌼', '🐝', '☀️', '🍯', '🧡'] },
   bunny:     { sticker: '🐰', floats: ['🐰', '🍓', '🎀', '🩰', '🍭', '💗'] },
+  rajae:     { sticker: '🦅', floats: ['🦅', '🟢', '⚪', '⚽', '🏆', '⭐'] },
 };
 
 function showKeyAnimation(anim, msg) {
@@ -1011,7 +1012,7 @@ function showKeyAnimation(anim, msg) {
   /* Big central sticker */
   var sticker = document.createElement('div');
   sticker.className = 'key-sticker';
-  sticker.textContent = fx.sticker;
+  sticker.innerHTML = fx.sticker;
   stage.appendChild(sticker);
 
   /* Ambient floats around the sticker */
